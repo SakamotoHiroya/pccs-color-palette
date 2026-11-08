@@ -68,7 +68,7 @@ input, button { font-family: inherit; }
   /* Three columns (desktop): [picker] [selected colour, hue + sliders,
      settings] [map, tones]. The picker column is a square: as large as the
      viewport height allows, but at most 36% of the width. */
-  --pick: min(calc(100dvh - var(--header-h) - 1.5 * var(--edge) - 28px), 36vw);
+  --pick: min(calc(100dvh - var(--header-h) - 1.5 * var(--edge) - 28px - 150px), 36vw);
   display: grid;
   grid-template-columns: var(--pick) minmax(0, 1.2fr) minmax(0, 1fr);
   gap: calc(var(--gap) * 1.4);
@@ -76,7 +76,11 @@ input, button { font-family: inherit; }
 
 /* ---- Left: picker ---- */
 .leftColumn { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; container-type: inline-size; }
-.centerColumn { min-width: 0; }
+/* Picker column: picker on top, the explanation below it. */
+.centerColumn { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.pickerArea { min-width: 0; }
+.aboutNote { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
+.aboutNote code { color: var(--text); font-family: inherit; }
 .pickerBox { width: 100%; }
 .square {
   position: relative;
@@ -339,15 +343,16 @@ input, button { font-family: inherit; }
   outline: 1px solid var(--line);
 }
 
-.footer { color: var(--muted); font-size: 12px; line-height: 1.8; max-width: 900px; padding: 8px 20px 32px; margin: 0 auto; }
-.footer code { color: var(--text); font-family: inherit; }
 
 /* Desktop: fit the main UI to the viewport. */
 @media (min-width: 1100px) {
   .app { height: calc(100vh - var(--header-h)); height: calc(100dvh - var(--header-h)); }
   .layout { flex: 1 1 auto; min-height: 0; align-items: start; }
   /* Column order: picker on the left edge. */
-  .centerColumn { grid-column: 1; grid-row: 1; }
+  .centerColumn { grid-column: 1; grid-row: 1; height: 100%; min-height: 0; }
+  /* Largest square that leaves room for the explanation below it. */
+  .pickerArea { flex: 1 1 auto; min-height: 0; container-type: size; }
+  .pickerArea .pickerBox { width: min(100cqw, calc(100cqh - 28px)); }
   .leftColumn { grid-column: 2; grid-row: 1; }
   .layout > .controls { grid-column: 3; grid-row: 1; }
   .layout > .controls { height: 100%; overflow-y: auto; }

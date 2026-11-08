@@ -334,22 +334,32 @@ export default function PccsPalette() {
 
           {/* ---- Centre: HSB picker ---- */}
           <section className="centerColumn" aria-label="カラーピッカー">
-            <div className="pickerBox">
-              <SvSquare
-                hue={hue}
-                sat={sat}
-                val={val}
-                onPick={(s, v) => pickColor(hue, s, v)}
-                region={region}
-                showBands={showBands}
-                dimOutside={dimOutside}
-                stale={!field || field.hue !== hue}
-              />
-              <div className="axisNote">
-                <span>横軸: 彩度 S</span>
-                <span>縦軸: 明度 B（HSB）</span>
+            <div className="pickerArea">
+              <div className="pickerBox">
+                <SvSquare
+                  hue={hue}
+                  sat={sat}
+                  val={val}
+                  onPick={(s, v) => pickColor(hue, s, v)}
+                  region={region}
+                  showBands={showBands}
+                  dimOutside={dimOutside}
+                  stale={!field || field.hue !== hue}
+                />
+                <div className="axisNote">
+                  <span>横軸: 彩度 S</span>
+                  <span>縦軸: 明度 B（HSB）</span>
+                </div>
               </div>
             </div>
+            <p className="aboutNote">
+              PCCSの明度・彩度は人間の視感評価に基づく尺度であり、RGBやHSBの値から単純計算はできません。
+              本アプリでは Python の <code>pccs</code> ライブラリ（Kobayashi &amp; Yoshiki, 2001
+              の PCCS–マンセル関係式）と、視感実験に基づくマンセル再表記データ（colour-science）で
+              全PCCSパターンをCIELABに変換した参照表を作り、各ピクセルの色をその参照表上に位置づけて
+              PCCSの明度・彩度を求めています。トーンは同論文のトーン座標で判定しています。
+              sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
+            </p>
           </section>
 
           {/* ---- Right: map, tones ---- */}
@@ -400,17 +410,6 @@ export default function PccsPalette() {
           </aside>
         </main>
       </div>
-
-      <footer className="footer">
-        <p>
-          PCCSの明度・彩度は人間の視感評価に基づく尺度であり、RGBやHSBの値から単純計算はできません。
-          本アプリでは Python の <code>pccs</code> ライブラリ（Kobayashi &amp; Yoshiki, 2001
-          の PCCS–マンセル関係式）と、視感実験に基づくマンセル再表記データ（colour-science）で
-          全PCCSパターンをCIELABに変換した参照表を作り、各ピクセルの色をその参照表上に位置づけて
-          PCCSの明度・彩度を求めています。トーンは同論文のトーン座標で判定しています。
-          sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
-        </p>
-      </footer>
     </>
   );
 }
