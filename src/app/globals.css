@@ -1,0 +1,307 @@
+/* Neutral (achromatic) UI so it does not bias colour judgement. */
+:root {
+  --bg: #2b2b2b;
+  --panel: #353535;
+  --line: #4a4a4a;
+  --text: #ececec;
+  --muted: #a6a6a6;
+  --accent: #ffffff;
+  --radius: 10px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.app { max-width: 1240px; margin: 0 auto; padding: 20px 16px 32px; }
+
+.header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.02em; }
+.header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.pickerColumn { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.square {
+  position: relative;
+  width: 100%;
+  max-width: min(860px, calc(100vh - 150px));
+  min-width: 240px;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+  outline: 1px solid var(--line);
+  margin: 0 auto;
+}
+.square:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.square .layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.square.stale .layer + .layer { opacity: 0.6; transition: opacity 0.1s; }
+
+.label { font-size: 13px; color: var(--muted); }
+.value { text-align: right; font-size: 13px; }
+
+.axisNote {
+  display: flex; justify-content: space-between;
+  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
+  font-size: 12px; color: var(--muted);
+}
+
+/* Range sliders */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  border-radius: 8px;
+  outline: 1px solid var(--line);
+  margin: 6px 0;
+  cursor: pointer;
+}
+.slider:focus-visible { outline: 2px solid var(--accent); }
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: transparent;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+}
+.slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: transparent;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7);
+}
+.slider::-moz-range-track { background: transparent; }
+
+.panel { display: flex; flex-direction: column; gap: 12px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+
+.sliderHead { display: flex; align-items: baseline; justify-content: space-between; }
+.big { font-size: 26px; font-weight: 600; }
+
+.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 2px; }
+
+.chipRow { display: flex; gap: 12px; align-items: center; }
+.chip {
+  flex: none; width: 52px; height: 52px; border-radius: 8px;
+  outline: 1px solid var(--line);
+}
+.chipEmpty {
+  background: repeating-linear-gradient(45deg, #444 0 6px, #3a3a3a 6px 12px);
+}
+.chipText { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-top: 6px; cursor: pointer; }
+
+.hexInput {
+  width: 110px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+.hexInput:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.pccsInfo {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;
+  margin: 12px 0; font-size: 14px;
+}
+.pccsInfo dt { color: var(--muted); font-size: 12px; align-self: center; }
+.pccsInfo dd { margin: 0; }
+
+.button {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #424242;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.button:hover { background: #4b4b4b; }
+.button:focus-visible { outline: 2px solid var(--accent); }
+
+.footer { margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; max-width: 860px; }
+.footer code { color: var(--text); }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .wheel, .axisNote, .viewOptions { max-width: 100%; }
+}
+
+/* Tones */
+.toneHead { display: flex; align-items: baseline; gap: 12px; }
+.toneName { font-size: 16px; font-weight: 600; }
+.toneNote { margin: 4px 0 10px; }
+.toneMap {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-auto-rows: 50px;
+  gap: 4px;
+}
+.toneButton {
+  border: none;
+  border-radius: 6px;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  outline: 1px solid rgba(0, 0, 0, 0.35);
+  font: inherit;
+  min-width: 0;
+}
+.toneButton:hover { filter: brightness(1.08); }
+.toneButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toneButton.active {
+  outline: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.6);
+  z-index: 1;
+}
+.toneSym { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; }
+.toneJa { font-size: 9.5px; line-height: 1.1; text-align: center; max-width: 100%; word-break: keep-all; }
+
+/* Out-of-gamut approximation */
+.approxBadge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+.chip { position: relative; }
+.chipBadge { position: absolute; right: -5px; top: -5px; }
+.toneButton { position: relative; }
+.toneBadge { position: absolute; right: 2px; top: 2px; min-width: 13px; height: 13px; font-size: 10px; }
+.tickApprox { color: var(--text); }
+.approxNote { margin: 8px 0 0; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
+
+/* Range-capable PCCS slider */
+.sliderBlock + .sliderBlock { margin-top: 14px; }
+.sliderName { font-size: 13px; color: var(--muted); }
+.mid { font-size: 20px; font-weight: 600; }
+.pslider { padding-bottom: 2px; }
+.psHit {
+  position: relative;
+  height: 28px;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 8px;
+}
+.psHit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.psTrack {
+  position: absolute; left: 0; right: 0; top: 6px; height: 16px;
+  border-radius: 8px;
+  outline: 1px solid var(--line);
+}
+.psThumb {
+  position: absolute; top: 4px; width: 20px; height: 20px; margin-left: -10px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+.psRange {
+  position: absolute; top: 2px; height: 24px;
+  border-radius: 12px;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+.psTicks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
+.psTicks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.psTicks .tickOn { color: var(--text); font-weight: 600; }
+.hint { margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+.toneButton.current:not(.active) {
+  outline: 2px dashed rgba(255, 255, 255, 0.9);
+  outline-offset: 1px;
+}
+
+
+.viewOptions {
+  display: flex; flex-wrap: wrap; gap: 4px 20px;
+  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
+}
+.viewOptions .check { margin-top: 0; }
+
+/* Hue wheel around the HSB square */
+.wheel {
+  /* --ring (thickness) and --gap (ring–square space) are set from HueWheel.tsx,
+     both in % of the wheel box. */
+  position: relative;
+  width: 100%;
+  max-width: min(860px, calc(100vh - 150px));
+  min-width: 260px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+.hueRing {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    #ff0000, #ffff00 60deg, #00ff00 120deg, #00ffff 180deg,
+    #0000ff 240deg, #ff00ff 300deg, #ff0000 360deg);
+  /* Stops are relative to the radius (= 50% of the box), hence 2 × --ring. */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2 * var(--ring)), #000 calc(100% - 2 * var(--ring) + 0.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2 * var(--ring)), #000 calc(100% - 2 * var(--ring) + 0.5px));
+  clip-path: circle(50%);
+  cursor: pointer;
+  touch-action: none;
+}
+.hueRing:focus-visible { outline: none; }
+.wheel:has(.hueRing:focus-visible) .hueMarker { box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.7); }
+.hueMarker {
+  position: absolute;
+  width: 4.2%; aspect-ratio: 1 / 1;
+  min-width: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+/* Largest square inside the ring's inner circle. */
+.wheelCenter {
+  position: absolute;
+  --side: calc((100% - 2 * (var(--ring) + var(--gap))) * 0.70710678);
+  width: var(--side);
+  height: var(--side);
+  left: calc((100% - var(--side)) / 2);
+  top: calc((100% - var(--side)) / 2);
+}
+.wheelCenter .square { max-width: none; min-width: 0; width: 100%; }
+.hueValue { position: absolute; right: 0; bottom: 0; font-size: 13px; color: var(--muted); }
