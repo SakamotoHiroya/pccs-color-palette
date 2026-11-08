@@ -118,3 +118,7 @@ npm run export:pccs
 ## デプロイ
 
 Vercel にリポジトリをインポートするだけで動きます（フレームワークは Next.js が自動検出されます。Python は実行時には不要です）。
+
+Vercel Web Analytics を組み込んでいます（`@vercel/analytics`、`src/app/layout.tsx` の `<Analytics />`）。
+計測を始めるには、Vercel のプロジェクト画面で **Analytics** タブを開き、Web Analytics を有効化してください。
+ローカルの開発環境では送信されません。
