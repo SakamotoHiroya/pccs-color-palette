@@ -5,16 +5,10 @@ import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, type RGB } from "@/lib/color";
 import { isoSegments } from "@/lib/contour";
 import { edgeHits } from "@/lib/gamutEdge";
 import {
-  PCCS_LIGHTNESSES,
-  PCCS_TONES,
   TONE_BY_SYMBOL,
   formatPccs,
   hueCode,
-  neutralColor,
-  pccsReferenceColor,
   rgbToPccs,
-  roundHalf,
-  toneCenter,
   toneOf,
   toneRange,
 } from "@/lib/pccs";
@@ -29,15 +23,13 @@ import {
   selectionForColor,
 } from "@/lib/selection";
 import { HueWheel } from "./HueWheel";
-import { PccsSlider } from "./PccsSlider";
+import { type MapHover, PccsMap } from "./PccsMap";
 import { SvSquare, type Region } from "./SvSquare";
 import { usePccsField } from "./usePccsField";
 
 const FIELD_N = 160; // sampling grid of the HSB square
-const SAT_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // 0 = neutral (n)
 
 const css = (rgb: RGB) => rgbToHex(rgb);
-const satLabel = (s: number) => (s === 0 ? "n" : `${s}s`);
 /**
  * Signed band field for a range of scale values [lo, hi] widened by half a
  * step: <= 0 inside. Ends of the scale (scaleMin / scaleMax) are open.
@@ -47,9 +39,6 @@ function bandField(x: number, lo: number, hi: number, half: number, scaleMin: nu
   const above = hi >= scaleMax ? -Infinity : x - (hi + half);
   return Math.max(below, above) / half;
 }
-
-const fmtRange = (a: number, b: number, f: (x: number) => string) =>
-  a === b ? f(a) : `${f(a)} – ${f(b)}`;
 
 const INITIAL = { hue: 350, sat: 0.75, val: 0.8 };
 
@@ -77,37 +66,40 @@ export default function PccsPalette() {
     return (Math.round(h - 1) % 24) + 1;
   }, [hue, selectedPccs]);
 
-  // Slider ranges for the current selection (tone extents use the reference hue).
-  const ranges = useMemo(() => {
-    if (selection.kind === "value") {
-      return { lMin: selection.l, lMax: selection.l, sMin: selection.s, sMax: selection.s };
-    }
-    return toneRange(refHue, selection.tone);
-  }, [selection, refHue]);
-  const lMid = roundHalf((ranges.lMin + ranges.lMax) / 2);
-  const sMid = Math.round((ranges.sMin + ranges.sMax) / 2);
-
-
-  const activeTone = selection.kind === "tone" ? selection.tone : null;
-  // Tone that the selected value cell belongs to (hint only).
-  const valueTone =
-    selection.kind === "value" && selection.s > 0
-      ? toneOf({ h: refHue, l: selection.l, s: selection.s })
-      : null;
-
-  const lightTrack = useMemo(
+  // Hovering the map previews that cell / tone on the picker.
+  const [hovered, setHovered] = useState<MapHover | null>(null);
+  const shown = useMemo<Selection>(
     () =>
-      `linear-gradient(to right, ${PCCS_LIGHTNESSES.map((l) => css(neutralColor(l))).join(", ")})`,
-    [],
+      hovered
+        ? hovered.target === "tone"
+          ? { kind: "tone", tone: hovered.tone }
+          : { kind: "value", l: hovered.l, s: hovered.s }
+        : selection,
+    [hovered, selection],
   );
-  const satColors = useMemo(
-    () => SAT_STEPS.map((s) => pccsReferenceColor(refHue, lMid, s)),
-    [refHue, lMid],
-  );
-  const satTrack = `linear-gradient(to right, ${satColors
-    .map((c) => (c ? css(c.rgb) : "transparent"))
-    .join(", ")})`;
-  const satApprox = satColors.map((c) => !c || !c.inGamut);
+
+  // Lightness / saturation extent of the shown selection (tone extents use
+  // the reference hue) — used for the band boundary lines.
+  const ranges = useMemo(() => {
+    if (shown.kind === "value") {
+      return { lMin: shown.l, lMax: shown.l, sMin: shown.s, sMax: shown.s };
+    }
+    return toneRange(refHue, shown.tone);
+  }, [shown, refHue]);
+
+  const describe = (sel: Selection) => {
+    if (sel.kind === "tone") {
+      const t = TONE_BY_SYMBOL[sel.tone];
+      return { main: `${sel.tone} ${t.ja}`, sub: `${t.en} ／ トーン全体` };
+    }
+    const n = formatPccs({ h: refHue, l: sel.l, s: sel.s });
+    if (n.neutral) return { main: n.long, sub: `無彩色 ${n.short}` };
+    const tone = toneOf({ h: refHue, l: sel.l, s: sel.s });
+    return { main: n.long, sub: `${n.short}（${TONE_BY_SYMBOL[tone].ja}）の 1 区画` };
+  };
+  const mapHeadline = hovered
+    ? { ...describe(shown), sub: `${describe(shown).sub} ／ プレビュー中` }
+    : describe(selection);
 
   const region = useMemo<Region | null>(() => {
     if (!field) return null;
@@ -115,7 +107,7 @@ export default function PccsPalette() {
     const reg = new Float32Array(n * n);
     let inside = 0;
     for (let k = 0; k < n * n; k++) {
-      reg[k] = selectionField(selection, l[k], s[k], h[k]);
+      reg[k] = selectionField(shown, l[k], s[k], h[k]);
       if (reg[k] <= 0) inside++;
     }
 
@@ -137,7 +129,7 @@ export default function PccsPalette() {
       field.rayL,
       field.rayS,
       field.rayH,
-      (rl, rs, rh) => selectionField(selection, rl, rs, rh) <= 0,
+      (rl, rs, rh) => selectionField(shown, rl, rs, rh) <= 0,
     );
     const approxRuns: number[][] = [];
     let run: number[] | null = null;
@@ -164,7 +156,7 @@ export default function PccsPalette() {
       approxRuns,
       approxCount,
     };
-  }, [field, selection, ranges]);
+  }, [field, shown, ranges]);
 
   // Is the selected colour on the boundary at an approximated position?
   const selectedIsApprox = useMemo(() => {
@@ -235,79 +227,26 @@ export default function PccsPalette() {
         </section>
 
         <aside className="panel">
-          {/* ---- PCCS lightness & saturation ---- */}
+          {/* ---- PCCS lightness × saturation map ---- */}
           <section className="card">
-            <h2>PCCS 明度・彩度</h2>
-            <div className="sliderBlock">
-              <div className="sliderHead">
-                <span className="sliderName">明度</span>
-                <span className="mid mono">
-                  {fmtRange(ranges.lMin, ranges.lMax, (x) => x.toFixed(1))}
-                </span>
-              </div>
-              <PccsSlider
-                label="PCCS明度"
-                min={L_MIN}
-                max={L_MAX}
-                step={0.5}
-                lo={ranges.lMin}
-                hi={ranges.lMax}
-                background={lightTrack}
-                ticks={[1.5, 3.5, 5.5, 7.5, 9.5].map((v) => ({ value: v, label: v.toFixed(1) }))}
-                valueText={(v) => `明度 ${v.toFixed(1)}`}
-                onChange={(l) => setSelection({ kind: "value", l, s: sMid })}
-              />
+            <h2>PCCS 明度・彩度・トーン</h2>
+            <div className="mapHead">
+              <span className="mapHeadMain mono">{mapHeadline.main}</span>
+              <span className="muted small">{mapHeadline.sub}</span>
             </div>
-            <div className="sliderBlock">
-              <div className="sliderHead">
-                <span className="sliderName">彩度</span>
-                <span className="mid mono">{fmtRange(ranges.sMin, ranges.sMax, satLabel)}</span>
-              </div>
-              <PccsSlider
-                label="PCCS彩度"
-                min={0}
-                max={S_MAX}
-                step={1}
-                lo={ranges.sMin}
-                hi={ranges.sMax}
-                background={satTrack}
-                ticks={SAT_STEPS.map((v) => ({
-                  value: v,
-                  label: v === 0 ? "n" : `${v}`,
-                  approx: v > 0 && satApprox[v],
-                }))}
-                valueText={(v) => (v === 0 ? "無彩色" : `彩度 ${v}s`)}
-                onChange={(s) => setSelection({ kind: "value", l: lMid, s })}
-              />
-            </div>
-            <p className="muted small hint">
-              n = 無彩色。
-              {satApprox.some(Boolean) && (
-                <>
-                  <span className="approxBadge">≈</span> = sRGB外（近似色で表示）。
-                </>
-              )}
-              {selection.kind === "tone" && "トーン選択中は、そのトーンに含まれる明度・彩度の幅を枠で表示しています。"}
-            </p>
-          </section>
-
-          {/* ---- PCCS tones ---- */}
-          <section className="card">
-            <h2>PCCS トーン</h2>
-            <p className="muted small toneNote">
-              {activeTone
-                ? `${activeTone}（${TONE_BY_SYMBOL[activeTone].ja}）のすべての範囲を表示中`
-                : valueTone
-                  ? `現在の区画は ${valueTone}（${TONE_BY_SYMBOL[valueTone].ja}）に属します。クリックでトーン全体を表示`
-                  : "クリックでそのトーンのすべての範囲を表示"}
-              ／ 色相 {hueCode(refHue)} 基準
-            </p>
-            <ToneMap
+            <PccsMap
               hue={refHue}
-              active={activeTone}
-              current={valueTone}
-              onSelect={(tone) => setSelection({ kind: "tone", tone })}
+              selection={selection}
+              selected={selectedPccs}
+              onSelectCell={(l, s) => setSelection({ kind: "value", l, s })}
+              onSelectTone={(tone) => setSelection({ kind: "tone", tone })}
+              onHover={setHovered}
             />
+            <p className="muted small hint">
+              色相 {hueCode(refHue)} の明度（縦）×彩度（横）。マスをクリックでその区画、
+              トーン記号のクリックかマスのダブルクリックでトーン全体を選択。
+              <span className="mapApproxKey" /> = sRGB外（近似色）、○ = 選択色の位置
+            </p>
           </section>
 
           {/* ---- Selected colour ---- */}
@@ -370,77 +309,6 @@ export default function PccsPalette() {
           sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
         </p>
       </footer>
-    </div>
-  );
-}
-
-/**
- * Tone buttons laid out like the PCCS tone map:
- * columns = saturation (2s, 3s, 5s, 6s, 8s, 9s), rows = light -> dark.
- */
-const TONE_MAP_POS: Record<string, [col: number, row: number]> = {
-  p: [1, 1], ltg: [1, 2], g: [1, 3], dkg: [1, 4],
-  "p+": [2, 1],
-  lt: [3, 1], sf: [3, 2], d: [3, 3], dk: [3, 4],
-  "lt+": [4, 1],
-  b: [5, 1], s: [5, 2], dp: [5, 3],
-  v: [6, 2],
-};
-
-function ToneMap({
-  hue,
-  active,
-  current,
-  onSelect,
-}: {
-  hue: number;
-  active: string | null;
-  current: string | null;
-  onSelect: (symbol: string) => void;
-}) {
-  return (
-    <div className="toneMap" role="group" aria-label="トーン">
-      {PCCS_TONES.map((t) => {
-        const c = toneCenter(hue, t.symbol);
-        const ref = pccsReferenceColor(hue, c.l, c.s);
-        const [col, row] = TONE_MAP_POS[t.symbol];
-        const cls = [
-          "toneButton",
-          t.symbol === active ? "active" : "",
-          t.symbol === current ? "current" : "",
-          ref ? "" : "chipEmpty",
-        ].join(" ");
-        return (
-          <button
-            key={t.symbol}
-            type="button"
-            className={cls}
-            style={{
-              gridColumn: col,
-              gridRow: row,
-              background: ref ? css(ref.rgb) : undefined,
-              color: c.l >= 6 ? "#111" : "#fff",
-            }}
-            onClick={() => onSelect(t.symbol)}
-            title={`${t.symbol} ${t.ja}（${t.en}） 中央値 明度 ${c.l.toFixed(1)} / 彩度 ${c.s}s${
-              ref && !ref.inGamut ? "（sRGB外：OKLCHで彩度を下げた近似色）" : ""
-            }`}
-            aria-pressed={t.symbol === active}
-          >
-            {ref && !ref.inGamut && <span className="approxBadge toneBadge">≈</span>}
-            <span className="toneSym">{t.symbol}</span>
-            <span className="toneJa">
-              {/* allow a line break only after 明るい／暗い (e.g. 明るい|灰み) */}
-              {t.ja.split(/(?<=明るい|暗い)/).map((part, i) => (
-                <span key={i}>
-                  {i > 0 && <wbr />}
-                  {part}
-                </span>
-              ))}
-            </span>
-          </button>
-        );
-      })}
     </div>
   );
 }

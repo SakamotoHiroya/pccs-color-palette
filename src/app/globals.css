@@ -101,10 +101,7 @@ html, body {
 }
 .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
 
-.sliderHead { display: flex; align-items: baseline; justify-content: space-between; }
-.big { font-size: 26px; font-weight: 600; }
 
-.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 2px; }
 
 .chipRow { display: flex; gap: 12px; align-items: center; }
 .chip {
@@ -159,38 +156,6 @@ html, body {
 }
 
 /* Tones */
-.toneHead { display: flex; align-items: baseline; gap: 12px; }
-.toneName { font-size: 16px; font-weight: 600; }
-.toneNote { margin: 4px 0 10px; }
-.toneMap {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: 50px;
-  gap: 4px;
-}
-.toneButton {
-  border: none;
-  border-radius: 6px;
-  padding: 2px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1px;
-  outline: 1px solid rgba(0, 0, 0, 0.35);
-  font: inherit;
-  min-width: 0;
-}
-.toneButton:hover { filter: brightness(1.08); }
-.toneButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.toneButton.active {
-  outline: 2px solid #fff;
-  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.6);
-  z-index: 1;
-}
-.toneSym { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; }
-.toneJa { font-size: 9.5px; line-height: 1.1; text-align: center; max-width: 100%; word-break: keep-all; }
 
 /* Out-of-gamut approximation */
 .approxBadge {
@@ -204,52 +169,11 @@ html, body {
 }
 .chip { position: relative; }
 .chipBadge { position: absolute; right: -5px; top: -5px; }
-.toneButton { position: relative; }
-.toneBadge { position: absolute; right: 2px; top: 2px; min-width: 13px; height: 13px; font-size: 10px; }
-.tickApprox { color: var(--text); }
 .approxNote { margin: 8px 0 0; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
 
 /* Range-capable PCCS slider */
-.sliderBlock + .sliderBlock { margin-top: 14px; }
-.sliderName { font-size: 13px; color: var(--muted); }
-.mid { font-size: 20px; font-weight: 600; }
-.pslider { padding-bottom: 2px; }
-.psHit {
-  position: relative;
-  height: 28px;
-  cursor: pointer;
-  touch-action: none;
-  border-radius: 8px;
-}
-.psHit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.psTrack {
-  position: absolute; left: 0; right: 0; top: 6px; height: 16px;
-  border-radius: 8px;
-  outline: 1px solid var(--line);
-}
-.psThumb {
-  position: absolute; top: 4px; width: 20px; height: 20px; margin-left: -10px;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
-  pointer-events: none;
-}
-.psRange {
-  position: absolute; top: 2px; height: 24px;
-  border-radius: 12px;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
-  pointer-events: none;
-}
-.psTicks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
-.psTicks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
-.psTicks .tickOn { color: var(--text); font-weight: 600; }
 .hint { margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 
-.toneButton.current:not(.active) {
-  outline: 2px dashed rgba(255, 255, 255, 0.9);
-  outline-offset: 1px;
-}
 
 
 .viewOptions {
@@ -305,3 +229,32 @@ html, body {
 }
 .wheelCenter .square { max-width: none; min-width: 0; width: 100%; }
 .hueValue { position: absolute; right: 0; bottom: 0; font-size: 13px; color: var(--muted); }
+
+/* PCCS lightness × saturation map */
+.mapHead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; min-height: 40px; }
+.mapHeadMain { font-size: 17px; font-weight: 600; }
+.pccsMap { display: block; width: 100%; height: auto; user-select: none; outline: none; }
+.pccsMap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.mapAxis { font-size: 8.5px; fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mapCell { cursor: pointer; }
+.mapApprox { fill: rgba(255, 255, 255, 0.85); stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; pointer-events: none; }
+.mapDim { fill: rgba(0, 0, 0, 0.32); pointer-events: none; }
+.mapToneBorder { fill: none; stroke: rgba(20, 20, 20, 0.9); stroke-width: 1.4; pointer-events: none; }
+.mapFrame { fill: none; stroke: var(--line); stroke-width: 1; pointer-events: none; }
+.mapLabel {
+  font-size: 9.5px; font-weight: 700; cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  paint-order: stroke; stroke-width: 2.4px; stroke-linejoin: round;
+}
+.mapLabel.light { fill: #fff; stroke: rgba(0, 0, 0, 0.55); }
+.mapLabel.dark { fill: #111; stroke: rgba(255, 255, 255, 0.6); }
+.mapLabel.on { text-decoration: underline; }
+.mapSelHalo { fill: none; stroke: rgba(0, 0, 0, 0.75); stroke-width: 4; stroke-linecap: square; pointer-events: none; }
+.mapSel { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: square; pointer-events: none; }
+.mapDot { fill: none; stroke: #fff; stroke-width: 1.8; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, 0.9)); pointer-events: none; }
+.mapApproxKey {
+  display: inline-block; width: 9px; height: 9px; vertical-align: -1px;
+  background: linear-gradient(225deg, #fff 50%, #777 50%);
+  outline: 1px solid var(--line);
+}
+.mapHover { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; filter: drop-shadow(0 0 1px rgba(0,0,0,0.9)); }
