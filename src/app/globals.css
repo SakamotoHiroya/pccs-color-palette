@@ -1,0 +1,260 @@
+/* Neutral (achromatic) UI so it does not bias colour judgement. */
+:root {
+  --bg: #2b2b2b;
+  --panel: #353535;
+  --line: #4a4a4a;
+  --text: #ececec;
+  --muted: #a6a6a6;
+  --accent: #ffffff;
+  --radius: 10px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.app { max-width: 1240px; margin: 0 auto; padding: 20px 16px 32px; }
+
+.header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.02em; }
+.header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.pickerColumn { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.square {
+  position: relative;
+  width: 100%;
+  max-width: min(860px, calc(100vh - 150px));
+  min-width: 240px;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+  outline: 1px solid var(--line);
+  margin: 0 auto;
+}
+.square:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.square .layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.square.stale .layer + .layer { opacity: 0.6; transition: opacity 0.1s; }
+
+.label { font-size: 13px; color: var(--muted); }
+.value { text-align: right; font-size: 13px; }
+
+.axisNote {
+  display: flex; justify-content: space-between;
+  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
+  font-size: 12px; color: var(--muted);
+}
+
+/* Range sliders */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  border-radius: 8px;
+  outline: 1px solid var(--line);
+  margin: 6px 0;
+  cursor: pointer;
+}
+.slider:focus-visible { outline: 2px solid var(--accent); }
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: transparent;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+}
+.slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: transparent;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7);
+}
+.slider::-moz-range-track { background: transparent; }
+
+.panel { display: flex; flex-direction: column; gap: 12px; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
+
+
+
+.chipRow { display: flex; gap: 12px; align-items: center; }
+.chip {
+  flex: none; width: 52px; height: 52px; border-radius: 8px;
+  outline: 1px solid var(--line);
+}
+.chipEmpty {
+  background: repeating-linear-gradient(45deg, #444 0 6px, #3a3a3a 6px 12px);
+}
+.chipText { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-top: 6px; cursor: pointer; }
+
+.hexInput {
+  width: 110px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+.hexInput:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.pccsInfo {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;
+  margin: 12px 0; font-size: 14px;
+}
+.pccsInfo dt { color: var(--muted); font-size: 12px; align-self: center; }
+.pccsInfo dd { margin: 0; }
+
+.button {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #424242;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.button:hover { background: #4b4b4b; }
+.button:focus-visible { outline: 2px solid var(--accent); }
+
+.footer { margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; max-width: 860px; }
+.footer code { color: var(--text); }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .wheel, .axisNote, .viewOptions { max-width: 100%; }
+}
+
+/* Tones */
+
+/* Out-of-gamut approximation */
+.approxBadge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+.chip { position: relative; }
+.chipBadge { position: absolute; right: -5px; top: -5px; }
+.approxNote { margin: 8px 0 0; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
+
+/* Range-capable PCCS slider */
+.hint { margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+
+
+.viewOptions {
+  display: flex; flex-wrap: wrap; gap: 4px 20px;
+  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
+}
+.viewOptions .check { margin-top: 0; }
+
+/* Hue wheel around the HSB square */
+.wheel {
+  /* --ring (thickness) and --gap (ring–square space) are set from HueWheel.tsx,
+     both in % of the wheel box. */
+  position: relative;
+  width: 100%;
+  max-width: min(860px, calc(100vh - 150px));
+  min-width: 260px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+.hueRing {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    #ff0000, #ffff00 60deg, #00ff00 120deg, #00ffff 180deg,
+    #0000ff 240deg, #ff00ff 300deg, #ff0000 360deg);
+  /* Stops are relative to the radius (= 50% of the box), hence 2 × --ring. */
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2 * var(--ring)), #000 calc(100% - 2 * var(--ring) + 0.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2 * var(--ring)), #000 calc(100% - 2 * var(--ring) + 0.5px));
+  clip-path: circle(50%);
+  cursor: pointer;
+  touch-action: none;
+}
+.hueRing:focus-visible { outline: none; }
+.wheel:has(.hueRing:focus-visible) .hueMarker { box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.7); }
+.hueMarker {
+  position: absolute;
+  width: 4.2%; aspect-ratio: 1 / 1;
+  min-width: 14px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+  pointer-events: none;
+}
+/* Largest square inside the ring's inner circle. */
+.wheelCenter {
+  position: absolute;
+  --side: calc((100% - 2 * (var(--ring) + var(--gap))) * 0.70710678);
+  width: var(--side);
+  height: var(--side);
+  left: calc((100% - var(--side)) / 2);
+  top: calc((100% - var(--side)) / 2);
+}
+.wheelCenter .square { max-width: none; min-width: 0; width: 100%; }
+.hueValue { position: absolute; right: 0; bottom: 0; font-size: 13px; color: var(--muted); }
+
+/* PCCS lightness × saturation map */
+.mapHead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; min-height: 40px; }
+.mapHeadMain { font-size: 17px; font-weight: 600; }
+.pccsMap { display: block; width: 100%; height: auto; user-select: none; outline: none; }
+.pccsMap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.mapAxis { font-size: 8.5px; fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mapCell { cursor: pointer; }
+.mapApprox { fill: rgba(255, 255, 255, 0.85); stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; pointer-events: none; }
+.mapDim { fill: rgba(0, 0, 0, 0.32); pointer-events: none; }
+.mapToneBorder { fill: none; stroke: rgba(20, 20, 20, 0.9); stroke-width: 1.4; pointer-events: none; }
+.mapFrame { fill: none; stroke: var(--line); stroke-width: 1; pointer-events: none; }
+.mapLabel {
+  font-size: 9.5px; font-weight: 700; cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  paint-order: stroke; stroke-width: 2.4px; stroke-linejoin: round;
+}
+.mapLabel.light { fill: #fff; stroke: rgba(0, 0, 0, 0.55); }
+.mapLabel.dark { fill: #111; stroke: rgba(255, 255, 255, 0.6); }
+.mapLabel.on { text-decoration: underline; }
+.mapSelHalo { fill: none; stroke: rgba(0, 0, 0, 0.75); stroke-width: 4; stroke-linecap: square; pointer-events: none; }
+.mapSel { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: square; pointer-events: none; }
+.mapDot { fill: none; stroke: #fff; stroke-width: 1.8; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, 0.9)); pointer-events: none; }
+.mapApproxKey {
+  display: inline-block; width: 9px; height: 9px; vertical-align: -1px;
+  background: linear-gradient(225deg, #fff 50%, #777 50%);
+  outline: 1px solid var(--line);
+}
+.mapHover { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; filter: drop-shadow(0 0 1px rgba(0,0,0,0.9)); }
