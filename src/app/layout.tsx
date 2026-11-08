@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 
@@ -22,7 +23,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={mincho.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Vercel Web Analytics (active on Vercel deployments only) */}
+        <Analytics />
+      </body>
     </html>
   );
 }

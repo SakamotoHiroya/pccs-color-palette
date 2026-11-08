@@ -10,6 +10,7 @@
     "export:pccs": "uv run --python 3.12 scripts/export_pccs.py"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "^16.4.5",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
