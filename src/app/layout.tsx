@@ -11,7 +11,6 @@ const mincho = Noto_Serif_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Palette",
   description: "HSBカラーピッカー上にPCCS（日本色研配色体系）の明度・彩度・トーンの範囲を表示するカラーパレット",
 };
 

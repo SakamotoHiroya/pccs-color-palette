@@ -53,14 +53,21 @@ function bandField(x: number, lo: number, hi: number, half: number, scaleMin: nu
   return Math.max(below, above) / half;
 }
 
-const INITIAL = { hue: 350, sat: 0.75, val: 0.8 };
+export interface InitialColor {
+  /** HSB hue 0..360 */
+  hue: number;
+  /** HSB saturation 0..1 */
+  sat: number;
+  /** HSB brightness 0..1 */
+  val: number;
+}
 
-export default function PccsPalette() {
-  const [hue, setHue] = useState(INITIAL.hue);
-  const [sat, setSat] = useState(INITIAL.sat);
-  const [val, setVal] = useState(INITIAL.val);
+export default function PccsPalette({ initial }: { initial: InitialColor }) {
+  const [hue, setHue] = useState(initial.hue);
+  const [sat, setSat] = useState(initial.sat);
+  const [val, setVal] = useState(initial.val);
   const [selection, setSelection] = useState<Selection>(() =>
-    selectionFromPccs(rgbToPccs(hsvToRgb(INITIAL.hue, INITIAL.sat, INITIAL.val))),
+    selectionFromPccs(rgbToPccs(hsvToRgb(initial.hue, initial.sat, initial.val))),
   );
   const [showBands, setShowBands] = useState(true);
   const [dimOutside, setDimOutside] = useState(false);
@@ -201,14 +208,13 @@ export default function PccsPalette() {
 
   const rgb255 = selected.map((c) => Math.round(c * 255));
 
-  // Tab title follows the selected colour name, e.g. "Palette 深い青".
   const name = colorName(selectedPccs);
-  useEffect(() => {
-    document.title = `Palette ${name}`;
-  }, [name]);
 
   return (
     <>
+      {/* Tab title follows the selected colour name, e.g. "Palette 深い青"
+          (React hoists <title> into <head>, also in the server HTML). */}
+      <title>{`Palette ${name}`}</title>
       <header className="siteHeader">
         <span className="siteTitle">Color Picker</span>
       </header>
