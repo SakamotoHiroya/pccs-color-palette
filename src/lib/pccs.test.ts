@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import full from "../../data/pccs-patterns.json";
-import { hsvToRgb, rgbToHsv, rgbToLab, labToRgb, type RGB } from "./color";
-import { PCCS_TONES, formatPccs, lightnessFromLstar, rgbToPccs, toneCenter, toneOf } from "./pccs";
+import { hsvToRgb, rgbToHsv, rgbToLab, labToRgb, textOn, type RGB } from "./color";
+import { PCCS_HUE_NAMES, PCCS_TONES, colorName, formatPccs, lightnessFromLstar, rgbToPccs, toneCenter, toneOf } from "./pccs";
 
 type Pattern = {
   hue: number;
@@ -24,6 +24,14 @@ describe("color conversions", () => {
     expect(h).toBeCloseTo(200, 6);
     expect(s).toBeCloseTo(0.6, 6);
     expect(v).toBeCloseTo(0.8, 6);
+  });
+
+  it("picks black or white text by contrast", () => {
+    expect(textOn([1, 1, 1])).toBe("#000000");
+    expect(textOn([0, 0, 0])).toBe("#ffffff");
+    expect(textOn([1, 1, 0])).toBe("#000000"); // yellow
+    expect(textOn([0, 0, 0.8])).toBe("#ffffff"); // dark blue
+    expect(textOn([0.8, 0.2, 0.3])).toBe("#ffffff"); // #cc334d: white 5.07 vs black 4.14
   });
 
   it("Lab round trip", () => {
@@ -94,5 +102,25 @@ describe("tones", () => {
         expect(toneOf({ h, l: c.l, s: c.s }), symbol + h).toBe(symbol);
       }
     }
+  });
+});
+
+describe("colour names", () => {
+  it("combines the tone adjective and the hue name", () => {
+    expect(colorName({ h: 20, l: 2.5, s: 8 })).toBe("深い青紫"); // dp20
+    expect(colorName({ h: 8, l: 9.0, s: 2 })).toBe("淡い黄色"); // p8
+    expect(colorName({ h: 5, l: 4.5, s: 2 })).toBe("灰みの橙"); // g5
+    expect(colorName({ h: 2, l: 4.5, s: 9 })).toBe("純色の赤"); // v2
+  });
+
+  it("names neutrals", () => {
+    expect(colorName({ h: 1, l: 9.6, s: 0.1 })).toBe("白");
+    expect(colorName({ h: 1, l: 1.4, s: 0.1 })).toBe("黒");
+    expect(colorName({ h: 1, l: 5.5, s: 0.1 })).toBe("灰色");
+  });
+
+  it("covers all 24 hues with the 12 names", () => {
+    expect(new Set(PCCS_HUE_NAMES).size).toBe(12);
+    expect(PCCS_HUE_NAMES).toHaveLength(24);
   });
 });

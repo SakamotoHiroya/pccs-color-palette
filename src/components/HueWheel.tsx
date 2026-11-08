@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { hsvToRgb, rgbToHex } from "@/lib/color";
 
-/** Ring thickness and ring–square gap, in % of the wheel box. */
+/** Default ring thickness and ring–content gap, in % of the wheel box. */
 const RING = 3.5;
 const GAP = 1.5;
 
@@ -16,10 +16,19 @@ export function HueWheel({
   hue,
   onChange,
   children,
+  ring = RING,
+  gap = GAP,
+  className,
 }: {
   hue: number;
   onChange: (hue: number) => void;
-  children: React.ReactNode;
+  /** Placed inside the ring (largest inscribed square). */
+  children?: React.ReactNode;
+  /** Ring thickness in % of the wheel box. */
+  ring?: number;
+  /** Gap between ring and content in % of the wheel box. */
+  gap?: number;
+  className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,16 +50,16 @@ export function HueWheel({
   };
 
   const rad = (hue * Math.PI) / 180;
-  // Marker on the centre line of the ring (radius 50% - RING .. 50% of the box).
-  const r = 50 - RING / 2;
+  // Marker on the centre line of the ring (radius 50% - ring .. 50% of the box).
+  const r = 50 - ring / 2;
   const mx = 50 + r * Math.sin(rad);
   const my = 50 - r * Math.cos(rad);
 
   return (
     <div
-      className="wheel"
+      className={`wheel ${className ?? ""}`}
       ref={ref}
-      style={{ "--ring": `${RING}%`, "--gap": `${GAP}%` } as React.CSSProperties}
+      style={{ "--ring": `${ring}%`, "--gap": `${gap}%` } as React.CSSProperties}
     >
       <div
         className="hueRing"
@@ -74,8 +83,7 @@ export function HueWheel({
         className="hueMarker"
         style={{ left: `${mx}%`, top: `${my}%`, background: rgbToHex(hsvToRgb(hue, 1, 1)) }}
       />
-      <div className="wheelCenter">{children}</div>
-      <div className="hueValue mono">{Math.round(hue)}°</div>
+      {children && <div className="wheelCenter">{children}</div>}
     </div>
   );
 }

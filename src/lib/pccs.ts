@@ -229,25 +229,28 @@ export function hueCode(h: number): string {
 export interface ToneInfo {
   symbol: string;
   en: string;
+  /** Japanese tone name (label). */
   ja: string;
+  /** Adjective form used in colour names, e.g. "灰みの" + "橙". */
+  adj: string;
 }
 
 /** PCCS tones (12 basic tones + p+ / lt+ used by the pccs library). */
 export const PCCS_TONES: ToneInfo[] = [
-  { symbol: "v", en: "vivid", ja: "純色" },
-  { symbol: "b", en: "bright", ja: "明るい" },
-  { symbol: "s", en: "strong", ja: "強い" },
-  { symbol: "dp", en: "deep", ja: "深い" },
-  { symbol: "lt+", en: "light plus", ja: "浅い＋" },
-  { symbol: "lt", en: "light", ja: "浅い" },
-  { symbol: "sf", en: "soft", ja: "柔らかい" },
-  { symbol: "d", en: "dull", ja: "鈍い" },
-  { symbol: "dk", en: "dark", ja: "暗い" },
-  { symbol: "p+", en: "pale plus", ja: "薄い＋" },
-  { symbol: "p", en: "pale", ja: "薄い" },
-  { symbol: "ltg", en: "light grayish", ja: "明るい灰み" },
-  { symbol: "g", en: "grayish", ja: "灰み" },
-  { symbol: "dkg", en: "dark grayish", ja: "暗い灰み" },
+  { symbol: "v", en: "vivid", ja: "純色", adj: "純色の" },
+  { symbol: "b", en: "bright", ja: "鮮明な", adj: "鮮明な" },
+  { symbol: "s", en: "strong", ja: "強い", adj: "強い" },
+  { symbol: "dp", en: "deep", ja: "深い", adj: "深い" },
+  { symbol: "lt+", en: "light plus", ja: "澄んだ", adj: "澄んだ" },
+  { symbol: "lt", en: "light", ja: "明るい", adj: "明るい" },
+  { symbol: "sf", en: "soft", ja: "柔らかい", adj: "柔らかい" },
+  { symbol: "d", en: "dull", ja: "鈍い", adj: "鈍い" },
+  { symbol: "dk", en: "dark", ja: "暗い", adj: "暗い" },
+  { symbol: "p+", en: "pale plus", ja: "淡めの", adj: "淡めの" },
+  { symbol: "p", en: "pale", ja: "淡い", adj: "淡い" },
+  { symbol: "ltg", en: "light grayish", ja: "明るい灰み", adj: "明るい灰みの" },
+  { symbol: "g", en: "grayish", ja: "灰み", adj: "灰みの" },
+  { symbol: "dkg", en: "dark grayish", ja: "暗い灰み", adj: "暗い灰みの" },
 ];
 
 export const TONE_BY_SYMBOL: Record<string, ToneInfo> = Object.fromEntries(
@@ -382,4 +385,56 @@ export function pccsReferenceColor(
 
 export function neutralColor(l: number): RGB {
   return pccsReferenceColor(0, l, 0)!.rgb;
+}
+
+// ---------------------------------------------------------------------------
+// Colour names: "<tone adjective><hue name>", e.g. 深い青紫, 淡い黄色, 灰みの橙
+// ---------------------------------------------------------------------------
+
+/** 12 basic hue names, assigned to the 24 PCCS hues (index = hue - 1). */
+export const PCCS_HUE_NAMES: string[] = [
+  "赤", // 1:pR  purplish red
+  "赤", // 2:R   red
+  "赤", // 3:yR  yellowish red
+  "赤橙", // 4:rO  reddish orange
+  "橙", // 5:O   orange
+  "黄橙", // 6:yO  yellowish orange
+  "黄橙", // 7:rY  reddish yellow
+  "黄", // 8:Y   yellow
+  "黄", // 9:gY  greenish yellow
+  "黄緑", // 10:YG yellow green
+  "黄緑", // 11:yG yellowish green
+  "緑", // 12:G  green
+  "緑", // 13:bG bluish green
+  "青緑", // 14:BG blue green
+  "青緑", // 15:BG blue green
+  "青", // 16:gB greenish blue
+  "青", // 17:B  blue
+  "青", // 18:B  blue
+  "青", // 19:pB purplish blue
+  "青紫", // 20:V  violet
+  "紫", // 21:bP bluish purple
+  "紫", // 22:P  purple
+  "赤紫", // 23:rP reddish purple
+  "赤紫", // 24:RP red purple
+];
+
+/** Hue name of a PCCS hue (nearest of the 24 hues). */
+export function hueName(h: number): string {
+  return PCCS_HUE_NAMES[nearestHueIndex(h)];
+}
+
+/** Japanese name of a colour from its PCCS value. */
+export function colorName(p: PccsValue): string {
+  if (p.s < 0.5) {
+    const l = roundHalf(p.l);
+    if (l >= 9.5) return "白";
+    if (l <= 1.5) return "黒";
+    if (l >= 7) return "明るい灰色";
+    if (l <= 3.5) return "暗い灰色";
+    return "灰色";
+  }
+  const name = hueName(p.h);
+  // "黄" alone reads naturally as "黄色" after an adjective (淡い黄色).
+  return TONE_BY_SYMBOL[toneOf(p)].adj + (name === "黄" ? "黄色" : name);
 }

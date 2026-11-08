@@ -155,3 +155,15 @@ export function hexToRgb(hex: string): RGB | null {
   const n = parseInt(m[1], 16);
   return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
+
+/** WCAG relative luminance of an encoded sRGB colour. */
+export function relativeLuminance(rgb: RGB): number {
+  const [r, g, b] = rgb.map(toLinear);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Black or white, whichever has the higher contrast ratio on `bg`. */
+export function textOn(bg: RGB): "#000000" | "#ffffff" {
+  const L = relativeLuminance(bg);
+  return (L + 0.05) / 0.05 >= 1.05 / (L + 0.05) ? "#000000" : "#ffffff";
+}
