@@ -186,6 +186,7 @@ export function PccsMap({
     <svg
       className="pccsMap"
       viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMinYMin meet"
       role="application"
       aria-label="PCCS 明度×彩度マップ（矢印キーで区画を移動、Enterでトーン全体を選択）"
       tabIndex={0}

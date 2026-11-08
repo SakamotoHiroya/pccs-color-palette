@@ -133,19 +133,6 @@ export default function PccsPalette() {
     .join(", ")})`;
   const satApprox = satColors.map((c) => !c || !c.inGamut);
 
-  const describe = (sel: Selection) => {
-    if (sel.kind === "tone") {
-      const t = TONE_BY_SYMBOL[sel.tone];
-      return { main: `${sel.tone} ${t.ja}`, sub: `${t.en} ／ トーン全体` };
-    }
-    const n = formatPccs({ h: refHue, l: sel.l, s: sel.s });
-    if (n.neutral) return { main: n.long, sub: `無彩色 ${n.short}` };
-    const tone = toneOf({ h: refHue, l: sel.l, s: sel.s });
-    return { main: n.long, sub: `${n.short}（${TONE_BY_SYMBOL[tone].ja}）の 1 区画` };
-  };
-  const mapHeadline = hovered
-    ? { ...describe(shown), sub: `${describe(shown).sub} ／ プレビュー中` }
-    : describe(selection);
 
   const region = useMemo<Region | null>(() => {
     if (!field) return null;
@@ -223,7 +210,7 @@ export default function PccsPalette() {
   return (
     <>
       <header className="siteHeader">
-        <span className="siteTitle">PCCS Color Palette</span>
+        <span className="siteTitle">Color Picker</span>
       </header>
 
       <div className="app">
@@ -257,7 +244,6 @@ export default function PccsPalette() {
 
             {/* Hue circle with the PCCS lightness / saturation sliders beside it */}
             <section className="card hueCard">
-              <h2>色相・PCCS 明度・彩度</h2>
               <div className="hueSliders">
                 <div className="wheelHolder">
                   <HueWheel hue={hue} onChange={setHue} ring={11} gap={2} className="wheelSmall">
@@ -272,7 +258,7 @@ export default function PccsPalette() {
                 <div className="sliders">
                   <div className="sliderBlock">
                     <div className="sliderHead">
-                      <span className="sliderName">明度</span>
+                      <span className="sliderName">PCCS 明度</span>
                       <span className="mid mono">
                         {fmtRange(selRanges.lMin, selRanges.lMax, (x) => x.toFixed(1))}
                       </span>
@@ -292,7 +278,7 @@ export default function PccsPalette() {
                   </div>
                   <div className="sliderBlock">
                     <div className="sliderHead">
-                      <span className="sliderName">彩度</span>
+                      <span className="sliderName">PCCS 彩度</span>
                       <span className="mid mono">{fmtRange(selRanges.sMin, selRanges.sMax, satLabel)}</span>
                     </div>
                     <PccsSlider
@@ -334,50 +320,31 @@ export default function PccsPalette() {
 
           {/* ---- Centre: HSB picker ---- */}
           <section className="centerColumn" aria-label="カラーピッカー">
-            <div className="pickerArea">
-              <div className="pickerBox">
-                <SvSquare
-                  hue={hue}
-                  sat={sat}
-                  val={val}
-                  onPick={(s, v) => pickColor(hue, s, v)}
-                  region={region}
-                  showBands={showBands}
-                  dimOutside={dimOutside}
-                  stale={!field || field.hue !== hue}
-                />
-                <div className="axisNote">
-                  <span>横軸: 彩度 S</span>
-                  <span>縦軸: 明度 B（HSB）</span>
-                </div>
+            <div className="pickerBox">
+              <SvSquare
+                hue={hue}
+                sat={sat}
+                val={val}
+                onPick={(s, v) => pickColor(hue, s, v)}
+                region={region}
+                showBands={showBands}
+                dimOutside={dimOutside}
+                stale={!field || field.hue !== hue}
+              />
+              <div className="axisNote">
+                <span>横軸: 彩度 S</span>
+                <span>縦軸: 明度 B（HSB）</span>
               </div>
             </div>
-            <p className="aboutNote">
-              PCCSの明度・彩度は人間の視感評価に基づく尺度であり、RGBやHSBの値から単純計算はできません。
-              本アプリでは Python の <code>pccs</code> ライブラリ（Kobayashi &amp; Yoshiki, 2001
-              の PCCS–マンセル関係式）と、視感実験に基づくマンセル再表記データ（colour-science）で
-              全PCCSパターンをCIELABに変換した参照表を作り、各ピクセルの色をその参照表上に位置づけて
-              PCCSの明度・彩度を求めています。トーンは同論文のトーン座標で判定しています。
-              sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
-            </p>
           </section>
+
+          <div className="colDivider d1" aria-hidden="true" />
+          <div className="colDivider d2" aria-hidden="true" />
 
           {/* ---- Right: map, tones ---- */}
           <aside className="controls">
-            <section
-              className="card mapCard"
-              title="マスをクリック: その区画を選択 ／ トーン記号のクリック・マスのダブルクリック: トーン全体を選択 ／ 矢印キーで移動、Enterでトーン全体"
-            >
-              <div className="cardHead">
-                <h2>PCCS 明度×彩度マップ</h2>
-                <span className="muted small legendInline">
-                  <span className="mapApproxKey" /> sRGB外 ○ 選択色
-                </span>
-              </div>
-              <div className="mapHead">
-                <span className="mapHeadMain mono">{mapHeadline.main}</span>
-                <span className="muted small">{mapHeadline.sub}</span>
-              </div>
+            <section className="card mapCard">
+              <h2>明度×彩度マップ</h2>
               <div className="mapBox">
                 <PccsMap
                   hue={refHue}
@@ -391,15 +358,7 @@ export default function PccsPalette() {
             </section>
 
             <section className="card toneCard">
-              <h2>PCCS トーン</h2>
-              <p className="muted small toneNote">
-                {activeTone
-                  ? `${activeTone}（${TONE_BY_SYMBOL[activeTone].ja}）の範囲を表示中`
-                  : valueTone
-                    ? `現在の区画は ${valueTone}（${TONE_BY_SYMBOL[valueTone].ja}）`
-                    : "押すとトーン全体を表示"}
-                ／ 色相 {hueCode(refHue)} 基準
-              </p>
+              <h2>トーン</h2>
               <ToneButtons
                 hue={refHue}
                 active={activeTone}
@@ -410,6 +369,17 @@ export default function PccsPalette() {
           </aside>
         </main>
       </div>
+
+      <footer className="footer">
+        <p>
+          PCCSの明度・彩度は人間の視感評価に基づく尺度であり、RGBやHSBの値から単純計算はできません。
+          本アプリでは Python の <code>pccs</code> ライブラリ（Kobayashi &amp; Yoshiki, 2001
+          の PCCS–マンセル関係式）と、視感実験に基づくマンセル再表記データ（colour-science）で
+          全PCCSパターンをCIELABに変換した参照表を作り、各ピクセルの色をその参照表上に位置づけて
+          PCCSの明度・彩度を求めています。トーンは同論文のトーン座標で判定しています。
+          sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
+        </p>
+      </footer>
     </>
   );
 }

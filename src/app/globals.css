@@ -12,7 +12,7 @@
   --radius: 12px;
   --edge: clamp(20px, 3.2vw, 56px);  /* page edge margin */
   --gap: clamp(14px, 1.4vw, 24px);   /* space between panes */
-  --header-h: 52px;
+  --header-h: 76px;
   --font: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho",
     var(--font-mincho), "Noto Serif JP", serif;
   color-scheme: light;
@@ -48,12 +48,11 @@ input, button { font-family: inherit; }
   display: flex;
   align-items: center;
   padding: 0 var(--edge);
-  background: rgba(255, 255, 255, 0.28);
+  background: transparent;
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
   backdrop-filter: blur(16px) saturate(1.3);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
-.siteTitle { font-size: 17px; font-weight: 600; letter-spacing: 0.08em; }
+.siteTitle { font-size: 26px; font-weight: 600; letter-spacing: 0.08em; }
 
 .app {
   display: flex;
@@ -68,19 +67,16 @@ input, button { font-family: inherit; }
   /* Three columns (desktop): [picker] [selected colour, hue + sliders,
      settings] [map, tones]. The picker column is a square: as large as the
      viewport height allows, but at most 36% of the width. */
-  --pick: min(calc(100dvh - var(--header-h) - 1.5 * var(--edge) - 28px - 150px), 36vw);
+  --pick: min(calc(100dvh - var(--header-h) - 1.5 * var(--edge) - 28px), 36vw);
   display: grid;
   grid-template-columns: var(--pick) minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: calc(var(--gap) * 1.4);
+  gap: calc(var(--gap) * 2.4);
 }
 
 /* ---- Left: picker ---- */
-.leftColumn { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; container-type: inline-size; }
-/* Picker column: picker on top, the explanation below it. */
-.centerColumn { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-.pickerArea { min-width: 0; }
-.aboutNote { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
-.aboutNote code { color: var(--text); font-family: inherit; }
+.leftColumn { display: flex; flex-direction: column; gap: calc(var(--gap) * 1.6); min-width: 0; container-type: inline-size; }
+.centerColumn { min-width: 0; }
+.colDivider { display: none; }
 .pickerBox { width: 100%; }
 .square {
   position: relative;
@@ -90,7 +86,6 @@ input, button { font-family: inherit; }
   overflow: hidden;
   touch-action: none;
   cursor: crosshair;
-  outline: 1px solid var(--line);
 }
 .square:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .square .layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -145,21 +140,24 @@ input, button { font-family: inherit; }
 }
 
 /* ---- Right: controls ---- */
-.controls { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; min-height: 0; }
+.controls { display: flex; flex-direction: column; gap: calc(var(--gap) * 1.6); min-width: 0; min-height: 0; }
 .card {
-  background: var(--panel);
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 14px 18px 16px;
   min-width: 0;
 }
 .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; }
 
+/* Borderless sections: heading and content flush with the column. */
+.card:not(.selCard) { padding: 0; border-radius: 0; }
+.card:not(.selCard) h2 { margin-bottom: 10px; font-size: 14px; color: var(--text); }
+
+
 .hint { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; line-height: 1.5; }
 
 /* Map card grows to use the free height of the right column. */
 .mapCard, .toneCard { display: flex; flex-direction: column; min-height: 0; }
-.mapBox { flex: 1 1 auto; min-height: 0; display: flex; }
+.mapBox { min-height: 0; }
 
 /* Hue circle with the lightness / saturation sliders to its right */
 .hueCard { flex: none; }
@@ -177,7 +175,7 @@ input, button { font-family: inherit; }
 .pslider { padding-bottom: 2px; }
 .psHit { position: relative; height: 28px; cursor: pointer; touch-action: none; border-radius: 8px; }
 .psHit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.psTrack { position: absolute; left: 0; right: 0; top: 6px; height: 16px; border-radius: 8px; outline: 1px solid var(--line); }
+.psTrack { position: absolute; left: 0; right: 0; top: 6px; height: 16px; border-radius: 8px; }
 .psThumb {
   position: absolute; top: 4px; width: 20px; height: 20px; margin-left: -10px;
   border-radius: 50%;
@@ -202,7 +200,6 @@ input, button { font-family: inherit; }
   flex: none;
   height: 220px;
   overflow: hidden;
-  border-color: rgba(0, 0, 0, 0.12);
   padding: 22px 26px;
   display: flex;
   flex-direction: column;
@@ -246,7 +243,6 @@ input, button { font-family: inherit; }
   font-size: 14px;
   cursor: pointer;
 }
-.toggle + .toggle { border-top: 1px solid var(--line); }
 .toggle input {
   appearance: none;
   -webkit-appearance: none;
@@ -276,7 +272,6 @@ input, button { font-family: inherit; }
 }
 
 /* ---- Tone buttons ---- */
-.toneNote { margin: 0 0 8px; line-height: 1.5; }
 .toneMap {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 58px));
@@ -295,7 +290,6 @@ input, button { font-family: inherit; }
   align-items: center;
   justify-content: center;
   gap: 1px;
-  outline: 1px solid rgba(0, 0, 0, 0.2);
   font: inherit;
   min-width: 0;
 }
@@ -313,18 +307,14 @@ input, button { font-family: inherit; }
 .toneBadge { position: absolute; right: 2px; top: 2px; min-width: 13px; height: 13px; font-size: 10px; }
 
 /* ---- PCCS lightness × saturation map ---- */
-.cardHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; column-gap: 8px; }
-.cardHead h2 { white-space: nowrap; }
-.legendInline { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-.mapHead { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; margin-bottom: 6px; }
-.mapHeadMain { font-size: 16px; font-weight: 600; }
-.pccsMap { display: block; width: 100%; height: 100%; max-height: 100%; user-select: none; outline: none; }
+/* Map keeps its own aspect ratio (no stretching → no empty space below). */
+.pccsMap { display: block; width: 100%; height: auto; user-select: none; outline: none; }
 .pccsMap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
 .mapAxis { font-size: 8.5px; fill: var(--muted); font-family: var(--font); }
 .mapCell { cursor: pointer; }
 .mapApprox { fill: rgba(255, 255, 255, 0.9); stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; pointer-events: none; }
 .mapToneBorder { fill: none; stroke: rgba(20, 20, 20, 0.9); stroke-width: 1.4; pointer-events: none; }
-.mapFrame { fill: none; stroke: var(--line); stroke-width: 1; pointer-events: none; }
+.mapFrame { display: none; }
 .mapLabel {
   font-size: 10px; font-weight: 700; cursor: pointer;
   font-family: var(--font);
@@ -337,26 +327,40 @@ input, button { font-family: inherit; }
 .mapSel { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: square; pointer-events: none; }
 .mapDot { fill: none; stroke: #fff; stroke-width: 1.8; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, 0.9)); pointer-events: none; }
 .mapHover { fill: none; stroke: #111; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)); }
-.mapApproxKey {
-  display: inline-block; width: 9px; height: 9px; vertical-align: -1px;
-  background: linear-gradient(225deg, #fff 50%, #999 50%);
-  outline: 1px solid var(--line);
-}
 
+
+.footer { color: var(--muted); font-size: 12px; line-height: 1.8; max-width: 900px; padding: 8px 20px 32px; margin: 0 auto; }
+.footer code { color: var(--text); font-family: inherit; }
 
 /* Desktop: fit the main UI to the viewport. */
 @media (min-width: 1100px) {
-  .app { height: calc(100vh - var(--header-h)); height: calc(100dvh - var(--header-h)); }
-  .layout { flex: 1 1 auto; min-height: 0; align-items: start; }
+  /* The app is as tall as its content (sizes are capped by the viewport via
+     --pick and the controls' max-height), so the footer follows right after. */
+  /* Row height = tallest column, so the dividers end with the lowest element. */
+  .layout { flex: 1 1 auto; min-height: 0; align-items: start; align-content: start; }
   /* Column order: picker on the left edge. */
-  .centerColumn { grid-column: 1; grid-row: 1; height: 100%; min-height: 0; }
-  /* Largest square that leaves room for the explanation below it. */
-  .pickerArea { flex: 1 1 auto; min-height: 0; container-type: size; }
-  .pickerArea .pickerBox { width: min(100cqw, calc(100cqh - 28px)); }
+  /* Columns are as tall as their content (align-items: start on .layout). */
+  .centerColumn { grid-column: 1; grid-row: 1; }
   .leftColumn { grid-column: 2; grid-row: 1; }
-  .layout > .controls { grid-column: 3; grid-row: 1; }
-  .layout > .controls { height: 100%; overflow-y: auto; }
-  .mapCard { flex: 1 1 auto; min-height: 250px; }
+  .layout > .controls {
+    grid-column: 3; grid-row: 1;
+    max-height: calc(100dvh - var(--header-h) - 1.5 * var(--edge));
+    overflow-y: auto;
+  }
+  /* Vertical dividers: separate grid items spanning the full row height,
+     centred in the gaps before columns 2 and 3. */
+  .colDivider {
+    display: block;
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: start;
+    width: 1px;
+    margin-left: calc(var(--gap) * -1.2);
+    background: var(--line);
+    pointer-events: none;
+  }
+  .colDivider.d1 { grid-column: 2; }
+  .colDivider.d2 { grid-column: 3; }
 }
 
 /* Short desktop screens (e.g. 1366×768): tighten vertical space. */
@@ -369,6 +373,4 @@ input, button { font-family: inherit; }
 @media (max-width: 1099px) {
   .layout { grid-template-columns: 1fr; }
   .selCard { height: auto; min-height: 220px; }
-  .mapBox { display: block; }
-  .pccsMap { height: auto; }
 }
