@@ -63,10 +63,10 @@ export default function PccsPalette() {
     selectionFromPccs(rgbToPccs(hsvToRgb(INITIAL.hue, INITIAL.sat, INITIAL.val))),
   );
   const [showBands, setShowBands] = useState(true);
-  const [dimOutside, setDimOutside] = useState(true);
+  const [dimOutside, setDimOutside] = useState(false);
   // Picker click: also switch the highlighted range to the clicked colour's
   // cell (on), or keep the current range (off).
-  const [followPick, setFollowPick] = useState(true);
+  const [followPick, setFollowPick] = useState(false);
 
   const field = usePccsField(hue, FIELD_N);
 
