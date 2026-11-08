@@ -20,7 +20,7 @@ import {
   S_MAX,
   type Selection,
   selectionField,
-  selectionForColor,
+  selectionFromPccs,
 } from "@/lib/selection";
 import { HueWheel } from "./HueWheel";
 import { type MapHover, PccsMap } from "./PccsMap";
@@ -47,10 +47,13 @@ export default function PccsPalette() {
   const [sat, setSat] = useState(INITIAL.sat);
   const [val, setVal] = useState(INITIAL.val);
   const [selection, setSelection] = useState<Selection>(() =>
-    selectionForColor(rgbToPccs(hsvToRgb(INITIAL.hue, INITIAL.sat, INITIAL.val))),
+    selectionFromPccs(rgbToPccs(hsvToRgb(INITIAL.hue, INITIAL.sat, INITIAL.val))),
   );
   const [showBands, setShowBands] = useState(true);
   const [dimOutside, setDimOutside] = useState(true);
+  // Picker click: also switch the highlighted range to the clicked colour's
+  // cell (on), or keep the current range (off).
+  const [followPick, setFollowPick] = useState(true);
 
   const field = usePccsField(hue, FIELD_N);
 
@@ -168,12 +171,12 @@ export default function PccsPalette() {
     return e >= 0 && e < region.hits.length && region.hits[e] === 1;
   }, [region, hue, sat, val]);
 
-  // Picking a colour shows the whole PCCS tone it belongs to.
+  // Picking a colour shows the PCCS cell containing it (if enabled).
   const pickColor = (h: number, s: number, v: number) => {
     setHue(h);
     setSat(s);
     setVal(v);
-    setSelection(selectionForColor(rgbToPccs(hsvToRgb(h, s, v))));
+    if (followPick) setSelection(selectionFromPccs(rgbToPccs(hsvToRgb(h, s, v))));
   };
 
   const [hexInput, setHexInput] = useState("");
@@ -192,7 +195,7 @@ export default function PccsPalette() {
       <header className="header">
         <h1>PCCS Color Palette</h1>
         <p>
-          ピッカーをクリックするとその色が属するPCCSトーンの範囲全体を、トーンを押すとそのトーンの範囲を囲んで表示します
+          ピッカーをクリックするとその色を含むPCCSの区画を、PCCSマップのマスやトーン記号を押すとその区画・トーン全体を囲んで表示します
         </p>
       </header>
 
@@ -215,6 +218,10 @@ export default function PccsPalette() {
             <span>横軸: 彩度 S ／ 縦軸: 明度 B (HSB)</span>
           </div>
           <div className="viewOptions">
+            <label className="check">
+              <input type="checkbox" checked={followPick} onChange={(e) => setFollowPick(e.target.checked)} />
+              クリックした色の区画を表示
+            </label>
             <label className="check">
               <input type="checkbox" checked={showBands} onChange={(e) => setShowBands(e.target.checked)} />
               明度帯・彩度帯の境界線

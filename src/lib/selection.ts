@@ -6,7 +6,7 @@
  *    s = 0 means neutral (achromatic).
  *  - "tone": every colour whose PCCS tone is the given tone.
  */
-import { type PccsValue, roundHalf, toneMembership, toneOf } from "./pccs";
+import { type PccsValue, roundHalf, toneMembership } from "./pccs";
 
 export type Selection =
   | { kind: "value"; l: number; s: number }
@@ -42,12 +42,3 @@ export function selectionFromPccs(p: PccsValue): Selection {
   };
 }
 
-/**
- * Selection for a picked colour: the whole PCCS tone it belongs to.
- * Neutral colours have no tone, so they get the neutral cell at their
- * lightness instead.
- */
-export function selectionForColor(p: PccsValue): Selection {
-  if (p.s < NEUTRAL_S) return selectionFromPccs(p);
-  return { kind: "tone", tone: toneOf(p) };
-}
