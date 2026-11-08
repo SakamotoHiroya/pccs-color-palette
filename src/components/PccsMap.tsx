@@ -186,6 +186,7 @@ export function PccsMap({
     <svg
       className="pccsMap"
       viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMinYMin meet"
       role="application"
       aria-label="PCCS 明度×彩度マップ（矢印キーで区画を移動、Enterでトーン全体を選択）"
       tabIndex={0}
@@ -233,20 +234,6 @@ export function PccsMap({
           />
         ))}
 
-      {/* dim everything outside the selection */}
-      {flat
-        .filter((c) => !inSelection(c))
-        .map((c) => (
-          <rect
-            key={`d${c.row}-${c.col}`}
-            x={cx(c.col)}
-            y={cy(c.row)}
-            width={CW}
-            height={CH}
-            className="mapDim"
-          />
-        ))}
-
       <path d={toneBorders} className="mapToneBorder" />
       <rect x={LW} y={HH} width={W - LW} height={H - HH} className="mapFrame" />
 
@@ -276,8 +263,8 @@ export function PccsMap({
 
       <defs>
         <pattern id="mapMissing" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="5" height="5" fill="#3a3a3a" />
-          <line x1="0" y1="0" x2="0" y2="5" stroke="#4a4a4a" strokeWidth="2" />
+          <rect width="5" height="5" fill="#ececec" />
+          <line x1="0" y1="0" x2="0" y2="5" stroke="#d6d6d6" strokeWidth="2" />
         </pattern>
       </defs>
     </svg>

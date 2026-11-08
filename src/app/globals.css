@@ -1,13 +1,21 @@
-/* Neutral (achromatic) UI so it does not bias colour judgement. */
+/*
+ * Light, neutral (achromatic) UI so it does not bias colour judgement.
+ * Typeface: Mincho (serif) throughout.
+ */
 :root {
-  --bg: #2b2b2b;
-  --panel: #353535;
-  --line: #4a4a4a;
-  --text: #ececec;
-  --muted: #a6a6a6;
-  --accent: #ffffff;
-  --radius: 10px;
-  color-scheme: dark;
+  --bg: #f1f1f1;
+  --panel: #ffffff;
+  --line: #d4d4d4;
+  --text: #1c1c1c;
+  --muted: #6b6b6b;
+  --accent: #1c1c1c;
+  --radius: 12px;
+  --edge: clamp(20px, 3.2vw, 56px);  /* page edge margin */
+  --gap: clamp(14px, 1.4vw, 24px);   /* space between panes */
+  --header-h: 76px;
+  --font: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho",
+    var(--font-mincho), "Noto Serif JP", serif;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -16,182 +24,84 @@ html, body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  font-family: var(--font);
   -webkit-font-smoothing: antialiased;
 }
 
-.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+input, button { font-family: inherit; }
+
+.mono { font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 
-.app { max-width: 1240px; margin: 0 auto; padding: 20px 16px 32px; }
+/*
+ * Desktop: the app fills the viewport (no page scroll for the main UI).
+ * Left half: HSB picker, sized to fit both width and height.
+ * Right half: controls in four rows.
+ */
+/* Header: transparent, blurs whatever scrolls underneath it. */
+.siteHeader {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--edge);
+  background: transparent;
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+}
+.siteTitle { font-size: 26px; font-weight: 600; letter-spacing: 0.08em; }
 
-.header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.02em; }
-.header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 24px;
-  margin-top: 20px;
-  align-items: start;
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) * 0.8);
+  padding: calc(var(--edge) * 0.5) var(--edge) var(--edge);
+  max-width: 2000px;
+  margin: 0 auto;
 }
 
-.pickerColumn { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.layout {
+  /* Three columns (desktop): [picker] [selected colour, hue + sliders,
+     settings] [map, tones]. The picker column is a square: as large as the
+     viewport height allows, but at most 36% of the width. */
+  --pick: min(calc(100dvh - var(--header-h) - 1.5 * var(--edge) - 28px), 36vw);
+  display: grid;
+  grid-template-columns: var(--pick) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: calc(var(--gap) * 2.4);
+}
 
+/* ---- Left: picker ---- */
+.leftColumn { display: flex; flex-direction: column; gap: calc(var(--gap) * 1.6); min-width: 0; container-type: inline-size; }
+.centerColumn { min-width: 0; }
+.colDivider { display: none; }
+.pickerBox { width: 100%; }
 .square {
   position: relative;
   width: 100%;
-  max-width: min(860px, calc(100vh - 150px));
-  min-width: 240px;
   aspect-ratio: 1 / 1;
   border-radius: 6px;
   overflow: hidden;
   touch-action: none;
   cursor: crosshair;
-  outline: 1px solid var(--line);
-  margin: 0 auto;
 }
 .square:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .square .layer { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .square.stale .layer + .layer { opacity: 0.6; transition: opacity 0.1s; }
-
-.label { font-size: 13px; color: var(--muted); }
-.value { text-align: right; font-size: 13px; }
-
 .axisNote {
   display: flex; justify-content: space-between;
-  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
+  margin-top: 6px;
   font-size: 12px; color: var(--muted);
 }
 
-/* Range sliders */
-.slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 16px;
-  border-radius: 8px;
-  outline: 1px solid var(--line);
-  margin: 6px 0;
-  cursor: pointer;
-}
-.slider:focus-visible { outline: 2px solid var(--accent); }
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: transparent;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
-}
-.slider::-moz-range-thumb {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: transparent;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7);
-}
-.slider::-moz-range-track { background: transparent; }
-
-.panel { display: flex; flex-direction: column; gap: 12px; }
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-}
-.card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
-
-
-
-.chipRow { display: flex; gap: 12px; align-items: center; }
-.chip {
-  flex: none; width: 52px; height: 52px; border-radius: 8px;
-  outline: 1px solid var(--line);
-}
-.chipEmpty {
-  background: repeating-linear-gradient(45deg, #444 0 6px, #3a3a3a 6px 12px);
-}
-.chipText { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-
-
-.check { display: flex; gap: 8px; align-items: center; font-size: 13px; margin-top: 6px; cursor: pointer; }
-
-.hexInput {
-  width: 110px;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 14px;
-}
-.hexInput:focus { outline: 2px solid var(--accent); outline-offset: 0; }
-
-.pccsInfo {
-  display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;
-  margin: 12px 0; font-size: 14px;
-}
-.pccsInfo dt { color: var(--muted); font-size: 12px; align-self: center; }
-.pccsInfo dd { margin: 0; }
-
-.button {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: #424242;
-  color: var(--text);
-  font-size: 13px;
-  cursor: pointer;
-}
-.button:hover { background: #4b4b4b; }
-.button:focus-visible { outline: 2px solid var(--accent); }
-
-.footer { margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; max-width: 860px; }
-.footer code { color: var(--text); }
-
-@media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
-  .wheel, .axisNote, .viewOptions { max-width: 100%; }
-}
-
-/* Tones */
-
-/* Out-of-gamut approximation */
-.approxBadge {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 15px; height: 15px; padding: 0 3px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
-  font-size: 11px; font-weight: 700; line-height: 1;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55);
-}
-.chip { position: relative; }
-.chipBadge { position: absolute; right: -5px; top: -5px; }
-.approxNote { margin: 8px 0 0; font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
-
-/* Range-capable PCCS slider */
-.hint { margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-
-
-
-.viewOptions {
-  display: flex; flex-wrap: wrap; gap: 4px 20px;
-  width: 100%; max-width: min(860px, calc(100vh - 150px)); margin: 0 auto;
-}
-.viewOptions .check { margin-top: 0; }
-
-/* Hue wheel around the HSB square */
+/* ---- Hue wheel ---- */
 .wheel {
-  /* --ring (thickness) and --gap (ring–square space) are set from HueWheel.tsx,
+  /* --ring (thickness) and --gap (ring–content space) are set from HueWheel.tsx,
      both in % of the wheel box. */
   position: relative;
-  width: 100%;
-  max-width: min(860px, calc(100vh - 150px));
-  min-width: 260px;
   aspect-ratio: 1 / 1;
-  margin: 0 auto;
 }
 .hueRing {
   position: absolute; inset: 0;
@@ -207,15 +117,15 @@ html, body {
   touch-action: none;
 }
 .hueRing:focus-visible { outline: none; }
-.wheel:has(.hueRing:focus-visible) .hueMarker { box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(0,0,0,0.7); }
+.wheel:has(.hueRing:focus-visible) .hueMarker { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--accent); }
 .hueMarker {
   position: absolute;
-  width: 4.2%; aspect-ratio: 1 / 1;
-  min-width: 14px;
+  width: 11%; aspect-ratio: 1 / 1;
+  min-width: 12px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.7), inset 0 0 0 1.5px rgba(0,0,0,0.7);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.7), inset 0 0 0 1.5px rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 /* Largest square inside the ring's inner circle. */
@@ -226,35 +136,241 @@ html, body {
   height: var(--side);
   left: calc((100% - var(--side)) / 2);
   top: calc((100% - var(--side)) / 2);
+  display: flex; align-items: center; justify-content: center;
 }
-.wheelCenter .square { max-width: none; min-width: 0; width: 100%; }
-.hueValue { position: absolute; right: 0; bottom: 0; font-size: 13px; color: var(--muted); }
 
-/* PCCS lightness × saturation map */
-.mapHead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; min-height: 40px; }
-.mapHeadMain { font-size: 17px; font-weight: 600; }
+/* ---- Right: controls ---- */
+.controls { display: flex; flex-direction: column; gap: calc(var(--gap) * 1.6); min-width: 0; min-height: 0; }
+.card {
+  border-radius: var(--radius);
+  padding: 14px 18px 16px;
+  min-width: 0;
+}
+.card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; }
+
+/* Borderless sections: heading and content flush with the column. */
+.card:not(.selCard) { padding: 0; border-radius: 0; }
+.card:not(.selCard) h2 { margin-bottom: 10px; font-size: 14px; color: var(--text); }
+
+
+.hint { margin: 6px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; line-height: 1.5; }
+
+/* Map card grows to use the free height of the right column. */
+.mapCard, .toneCard { display: flex; flex-direction: column; min-height: 0; }
+.mapBox { min-height: 0; }
+
+/* Hue circle with the lightness / saturation sliders to its right */
+.hueCard { flex: none; }
+.hueSliders { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; }
+.wheelHolder { width: clamp(120px, 36cqw, 210px); }
+.wheelSmall { width: 100%; }
+.sliders { min-width: 0; }
+.hueCenter { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.hueValueBig { font-size: clamp(22px, 1.9vw, 32px); font-weight: 600; line-height: 1.1; }
+/* Lightness / saturation sliders (display a range, operate as a single value) */
+.sliderBlock + .sliderBlock { margin-top: 10px; }
+.sliderHead { display: flex; align-items: baseline; justify-content: space-between; }
+.sliderName { font-size: 13px; color: var(--muted); }
+.mid { font-size: 18px; font-weight: 600; }
+.pslider { padding-bottom: 2px; }
+.psHit { position: relative; height: 28px; cursor: pointer; touch-action: none; border-radius: 8px; }
+.psHit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.psTrack { position: absolute; left: 0; right: 0; top: 6px; height: 16px; border-radius: 8px; }
+.psThumb {
+  position: absolute; top: 4px; width: 20px; height: 20px; margin-left: -10px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.7), inset 0 0 0 1.5px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+.psRange {
+  position: absolute; top: 2px; height: 24px;
+  border-radius: 12px;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.7), inset 0 0 0 1.5px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+.psTicks { position: relative; height: 16px; font-size: 11px; color: var(--muted); }
+.psTicks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.psTicks .tickOn { color: var(--text); font-weight: 600; }
+.tickApprox { color: var(--text); }
+
+/* Selected colour: the pane itself is painted with the colour */
+.selCard {
+  flex: none;
+  height: 220px;
+  overflow: hidden;
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.colorName {
+  margin: 0 0 4px;
+  font-size: min(40px, calc((100cqw - 52px) / 8.6));
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+.selMain { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 28px; font-size: 19px; }
+.selSub { display: flex; flex-wrap: wrap; gap: 2px 24px; font-size: 13px; opacity: 0.85; }
+.copyCode {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.copyCode:hover .copyIcon { opacity: 1; }
+.copyCode:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; border-radius: 3px; }
+.copyIcon { width: 0.95em; height: 0.95em; opacity: 0.75; }
+
+.approxBadge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px; padding: 0 3px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+
+/* Display settings: toggle switches */
+.toggles { display: flex; flex-direction: column; }
+.toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 6px 0;
+  font-size: 14px;
+  cursor: pointer;
+}
+.toggle input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 40px; height: 22px;
+  margin: 0;
+  border-radius: 11px;
+  background: #c8c8c8;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.toggle input::before {
+  content: "";
+  position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s;
+}
+.toggle input:checked { background: var(--accent); }
+.toggle input:checked::before { transform: translateX(18px); }
+.toggle input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .toggle input, .toggle input::before { transition: none; }
+}
+
+/* ---- Tone buttons ---- */
+.toneMap {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 58px));
+  gap: 5px;
+  align-content: start;
+}
+.toneButton {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: none;
+  border-radius: 6px;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font: inherit;
+  min-width: 0;
+}
+.toneButton:hover { filter: brightness(1.06); }
+.toneButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.toneButton.active {
+  outline: 2px solid #fff;
+  box-shadow: 0 0 0 4px var(--accent);
+  z-index: 1;
+}
+.toneButton.current:not(.active) { outline: 2px dashed var(--accent); outline-offset: 2px; }
+.toneEmpty { background: repeating-linear-gradient(45deg, #ececec 0 6px, #e0e0e0 6px 12px); }
+.toneSym { font-size: 14px; font-weight: 700; }
+.toneJa { font-size: 10px; line-height: 1.1; text-align: center; max-width: 100%; word-break: keep-all; }
+.toneBadge { position: absolute; right: 2px; top: 2px; min-width: 13px; height: 13px; font-size: 10px; }
+
+/* ---- PCCS lightness × saturation map ---- */
+/* Map keeps its own aspect ratio (no stretching → no empty space below). */
 .pccsMap { display: block; width: 100%; height: auto; user-select: none; outline: none; }
 .pccsMap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
-.mapAxis { font-size: 8.5px; fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.mapAxis { font-size: 8.5px; fill: var(--muted); font-family: var(--font); }
 .mapCell { cursor: pointer; }
-.mapApprox { fill: rgba(255, 255, 255, 0.85); stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; pointer-events: none; }
-.mapDim { fill: rgba(0, 0, 0, 0.32); pointer-events: none; }
+.mapApprox { fill: rgba(255, 255, 255, 0.9); stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; pointer-events: none; }
 .mapToneBorder { fill: none; stroke: rgba(20, 20, 20, 0.9); stroke-width: 1.4; pointer-events: none; }
-.mapFrame { fill: none; stroke: var(--line); stroke-width: 1; pointer-events: none; }
+.mapFrame { display: none; }
 .mapLabel {
-  font-size: 9.5px; font-weight: 700; cursor: pointer;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px; font-weight: 700; cursor: pointer;
+  font-family: var(--font);
   paint-order: stroke; stroke-width: 2.4px; stroke-linejoin: round;
 }
 .mapLabel.light { fill: #fff; stroke: rgba(0, 0, 0, 0.55); }
 .mapLabel.dark { fill: #111; stroke: rgba(255, 255, 255, 0.6); }
 .mapLabel.on { text-decoration: underline; }
-.mapSelHalo { fill: none; stroke: rgba(0, 0, 0, 0.75); stroke-width: 4; stroke-linecap: square; pointer-events: none; }
+.mapSelHalo { fill: none; stroke: rgba(0, 0, 0, 0.8); stroke-width: 4; stroke-linecap: square; pointer-events: none; }
 .mapSel { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: square; pointer-events: none; }
 .mapDot { fill: none; stroke: #fff; stroke-width: 1.8; filter: drop-shadow(0 0 1.2px rgba(0, 0, 0, 0.9)); pointer-events: none; }
-.mapApproxKey {
-  display: inline-block; width: 9px; height: 9px; vertical-align: -1px;
-  background: linear-gradient(225deg, #fff 50%, #777 50%);
-  outline: 1px solid var(--line);
+.mapHover { fill: none; stroke: #111; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9)); }
+
+
+.footer { color: var(--muted); font-size: 12px; line-height: 1.8; max-width: 900px; padding: 8px 20px 32px; margin: 0 auto; }
+.footer code { color: var(--text); font-family: inherit; }
+
+/* Desktop: fit the main UI to the viewport. */
+@media (min-width: 1100px) {
+  /* The app is as tall as its content (sizes are capped by the viewport via
+     --pick and the controls' max-height), so the footer follows right after. */
+  /* Row height = tallest column, so the dividers end with the lowest element. */
+  .layout { flex: 1 1 auto; min-height: 0; align-items: start; align-content: start; }
+  /* Column order: picker on the left edge. */
+  /* Columns are as tall as their content (align-items: start on .layout). */
+  .centerColumn { grid-column: 1; grid-row: 1; }
+  .leftColumn { grid-column: 2; grid-row: 1; }
+  .layout > .controls {
+    grid-column: 3; grid-row: 1;
+    max-height: calc(100dvh - var(--header-h) - 1.5 * var(--edge));
+    overflow-y: auto;
+  }
+  /* Vertical dividers: separate grid items spanning the full row height,
+     centred in the gaps before columns 2 and 3. */
+  .colDivider {
+    display: block;
+    grid-row: 1;
+    align-self: stretch;
+    justify-self: start;
+    width: 1px;
+    margin-left: calc(var(--gap) * -1.2);
+    background: var(--line);
+    pointer-events: none;
+  }
+  .colDivider.d1 { grid-column: 2; }
+  .colDivider.d2 { grid-column: 3; }
 }
-.mapHover { fill: none; stroke: #fff; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; filter: drop-shadow(0 0 1px rgba(0,0,0,0.9)); }
+
+/* Short desktop screens (e.g. 1366×768): tighten vertical space. */
+@media (min-width: 1100px) and (max-height: 820px) {
+  .card { padding: 10px 16px 12px; }
+  .card h2 { margin-bottom: 6px; }
+}
+
+/* Narrow screens: stack everything and scroll. */
+@media (max-width: 1099px) {
+  .layout { grid-template-columns: 1fr; }
+  .selCard { height: auto; min-height: 220px; }
+}

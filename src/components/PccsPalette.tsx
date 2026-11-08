@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { hexToRgb, hsvToRgb, rgbToHex, rgbToHsv, type RGB } from "@/lib/color";
+import { hsvToRgb, rgbToHex, textOn, type RGB } from "@/lib/color";
 import { isoSegments } from "@/lib/contour";
 import { edgeHits } from "@/lib/gamutEdge";
 import {
   TONE_BY_SYMBOL,
+  PCCS_LIGHTNESSES,
+  colorName,
   formatPccs,
+  hueName,
+  neutralColor,
+  pccsReferenceColor,
+  roundHalf,
   hueCode,
   rgbToPccs,
   toneOf,
@@ -24,12 +30,19 @@ import {
 } from "@/lib/selection";
 import { HueWheel } from "./HueWheel";
 import { type MapHover, PccsMap } from "./PccsMap";
+import { PccsSlider } from "./PccsSlider";
 import { SvSquare, type Region } from "./SvSquare";
+import { ToneButtons } from "./ToneButtons";
 import { usePccsField } from "./usePccsField";
 
 const FIELD_N = 160; // sampling grid of the HSB square
 
+const SAT_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // 0 = neutral (n)
+
 const css = (rgb: RGB) => rgbToHex(rgb);
+const satLabel = (s: number) => (s === 0 ? "n" : `${s}s`);
+const fmtRange = (a: number, b: number, f: (x: number) => string) =>
+  a === b ? f(a) : `${f(a)} – ${f(b)}`;
 /**
  * Signed band field for a range of scale values [lo, hi] widened by half a
  * step: <= 0 inside. Ends of the scale (scaleMin / scaleMax) are open.
@@ -40,27 +53,33 @@ function bandField(x: number, lo: number, hi: number, half: number, scaleMin: nu
   return Math.max(below, above) / half;
 }
 
-const INITIAL = { hue: 350, sat: 0.75, val: 0.8 };
+export interface InitialColor {
+  /** HSB hue 0..360 */
+  hue: number;
+  /** HSB saturation 0..1 */
+  sat: number;
+  /** HSB brightness 0..1 */
+  val: number;
+}
 
-export default function PccsPalette() {
-  const [hue, setHue] = useState(INITIAL.hue);
-  const [sat, setSat] = useState(INITIAL.sat);
-  const [val, setVal] = useState(INITIAL.val);
+export default function PccsPalette({ initial }: { initial: InitialColor }) {
+  const [hue, setHue] = useState(initial.hue);
+  const [sat, setSat] = useState(initial.sat);
+  const [val, setVal] = useState(initial.val);
   const [selection, setSelection] = useState<Selection>(() =>
-    selectionFromPccs(rgbToPccs(hsvToRgb(INITIAL.hue, INITIAL.sat, INITIAL.val))),
+    selectionFromPccs(rgbToPccs(hsvToRgb(initial.hue, initial.sat, initial.val))),
   );
   const [showBands, setShowBands] = useState(true);
-  const [dimOutside, setDimOutside] = useState(true);
+  const [dimOutside, setDimOutside] = useState(false);
   // Picker click: also switch the highlighted range to the clicked colour's
   // cell (on), or keep the current range (off).
-  const [followPick, setFollowPick] = useState(true);
+  const [followPick, setFollowPick] = useState(false);
 
   const field = usePccsField(hue, FIELD_N);
 
   const selected = useMemo(() => hsvToRgb(hue, sat, val), [hue, sat, val]);
   const selectedPccs = useMemo(() => rgbToPccs(selected), [selected]);
   const selectedNotation = formatPccs(selectedPccs);
-  const selectedTone = selectedNotation.neutral ? null : toneOf(selectedPccs);
 
   // Reference PCCS hue: the selected colour's hue, or (for near-neutral
   // selections) the hue of the picker's pure colour.
@@ -90,19 +109,37 @@ export default function PccsPalette() {
     return toneRange(refHue, shown.tone);
   }, [shown, refHue]);
 
-  const describe = (sel: Selection) => {
-    if (sel.kind === "tone") {
-      const t = TONE_BY_SYMBOL[sel.tone];
-      return { main: `${sel.tone} ${t.ja}`, sub: `${t.en} ／ トーン全体` };
-    }
-    const n = formatPccs({ h: refHue, l: sel.l, s: sel.s });
-    if (n.neutral) return { main: n.long, sub: `無彩色 ${n.short}` };
-    const tone = toneOf({ h: refHue, l: sel.l, s: sel.s });
-    return { main: n.long, sub: `${n.short}（${TONE_BY_SYMBOL[tone].ja}）の 1 区画` };
-  };
-  const mapHeadline = hovered
-    ? { ...describe(shown), sub: `${describe(shown).sub} ／ プレビュー中` }
-    : describe(selection);
+  const activeTone = selection.kind === "tone" ? selection.tone : null;
+  // Tone that the selected cell belongs to (hint on the tone buttons).
+  const valueTone =
+    selection.kind === "value" && selection.s > 0
+      ? toneOf({ h: refHue, l: selection.l, s: selection.s })
+      : null;
+
+  // Slider ranges for the (non-hover) selection; tone extents use the reference hue.
+  const selRanges = useMemo(
+    () =>
+      selection.kind === "value"
+        ? { lMin: selection.l, lMax: selection.l, sMin: selection.s, sMax: selection.s }
+        : toneRange(refHue, selection.tone),
+    [selection, refHue],
+  );
+  const lMid = roundHalf((selRanges.lMin + selRanges.lMax) / 2);
+  const sMid = Math.round((selRanges.sMin + selRanges.sMax) / 2);
+  const lightTrack = useMemo(
+    () =>
+      `linear-gradient(to right, ${PCCS_LIGHTNESSES.map((l) => css(neutralColor(l))).join(", ")})`,
+    [],
+  );
+  const satColors = useMemo(
+    () => SAT_STEPS.map((s) => pccsReferenceColor(refHue, lMid, s)),
+    [refHue, lMid],
+  );
+  const satTrack = `linear-gradient(to right, ${satColors
+    .map((c) => (c ? css(c.rgb) : "transparent"))
+    .join(", ")})`;
+  const satApprox = satColors.map((c) => !c || !c.inGamut);
+
 
   const region = useMemo<Region | null>(() => {
     if (!field) return null;
@@ -161,16 +198,6 @@ export default function PccsPalette() {
     };
   }, [field, shown, ranges]);
 
-  // Is the selected colour on the boundary at an approximated position?
-  const selectedIsApprox = useMemo(() => {
-    if (!region || region.hue !== hue) return false;
-    const n = region.n;
-    let e = -1;
-    if (val >= 0.995) e = Math.round(sat * (n - 1));
-    else if (sat >= 0.995) e = n - 1 + Math.round((1 - val) * (n - 1));
-    return e >= 0 && e < region.hits.length && region.hits[e] === 1;
-  }, [region, hue, sat, val]);
-
   // Picking a colour shows the PCCS cell containing it (if enabled).
   const pickColor = (h: number, s: number, v: number) => {
     setHue(h);
@@ -179,132 +206,175 @@ export default function PccsPalette() {
     if (followPick) setSelection(selectionFromPccs(rgbToPccs(hsvToRgb(h, s, v))));
   };
 
-  const [hexInput, setHexInput] = useState("");
-  useEffect(() => setHexInput(rgbToHex(selected)), [selected]);
-  const commitHex = () => {
-    const rgb = hexToRgb(hexInput);
-    if (!rgb) return setHexInput(rgbToHex(selected));
-    const [h, s, v] = rgbToHsv(rgb);
-    pickColor(s > 0 ? h : hue, s, v);
-  };
-
   const rgb255 = selected.map((c) => Math.round(c * 255));
 
+  const name = colorName(selectedPccs);
+
   return (
-    <div className="app">
-      <header className="header">
-        <h1>PCCS Color Palette</h1>
-        <p>
-          ピッカーをクリックするとその色を含むPCCSの区画を、PCCSマップのマスやトーン記号を押すとその区画・トーン全体を囲んで表示します
-        </p>
+    <>
+      {/* Tab title follows the selected colour name, e.g. "Palette 深い青"
+          (React hoists <title> into <head>, also in the server HTML). */}
+      <title>{`Palette ${name}`}</title>
+      <header className="siteHeader">
+        <span className="siteTitle">Color Picker</span>
       </header>
 
-      <main className="layout">
-        <section className="pickerColumn" aria-label="カラーピッカー">
-          <HueWheel hue={hue} onChange={setHue}>
-            <SvSquare
-              hue={hue}
-              sat={sat}
-              val={val}
-              onPick={(s, v) => pickColor(hue, s, v)}
-              region={region}
-              showBands={showBands}
-              dimOutside={dimOutside}
-              stale={!field || field.hue !== hue}
-            />
-          </HueWheel>
-          <div className="axisNote">
-            <span>外周: 色相 H</span>
-            <span>横軸: 彩度 S ／ 縦軸: 明度 B (HSB)</span>
-          </div>
-          <div className="viewOptions">
-            <label className="check">
-              <input type="checkbox" checked={followPick} onChange={(e) => setFollowPick(e.target.checked)} />
-              クリックした色の区画を表示
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={showBands} onChange={(e) => setShowBands(e.target.checked)} />
-              明度帯・彩度帯の境界線
-            </label>
-            <label className="check">
-              <input type="checkbox" checked={dimOutside} onChange={(e) => setDimOutside(e.target.checked)} />
-              範囲外を暗く表示
-            </label>
-          </div>
-        </section>
+      <div className="app">
+        <main className="layout">
+          {/* ---- Left: selected colour, hue + sliders, display settings ---- */}
+          <section className="leftColumn" aria-label="選択色・色相・表示設定">
+            <section
+              className="card selCard"
+              style={{ background: css(selected), color: textOn(selected) }}
+              aria-label="選択色"
+            >
+              <h1 className="colorName" aria-live="polite">
+                {name}
+              </h1>
+              <div className="selMain">
+                <span>
+                  <span className="mono">{selectedNotation.short}</span>{" "}
+                  {selectedNotation.neutral
+                    ? "無彩色"
+                    : `${TONE_BY_SYMBOL[toneOf(selectedPccs)].ja}（${TONE_BY_SYMBOL[toneOf(selectedPccs)].en}）`}
+                </span>
+                <CopyCode code={css(selected).toUpperCase()} />
+              </div>
+              <div className="selSub mono">
+                <span>RGB {rgb255.join(", ")}</span>
+                <span>
+                  HSB {Math.round(hue)}°, {Math.round(sat * 100)}%, {Math.round(val * 100)}%
+                </span>
+              </div>
+            </section>
 
-        <aside className="panel">
-          {/* ---- PCCS lightness × saturation map ---- */}
-          <section className="card">
-            <h2>PCCS 明度・彩度・トーン</h2>
-            <div className="mapHead">
-              <span className="mapHeadMain mono">{mapHeadline.main}</span>
-              <span className="muted small">{mapHeadline.sub}</span>
-            </div>
-            <PccsMap
-              hue={refHue}
-              selection={selection}
-              selected={selectedPccs}
-              onSelectCell={(l, s) => setSelection({ kind: "value", l, s })}
-              onSelectTone={(tone) => setSelection({ kind: "tone", tone })}
-              onHover={setHovered}
-            />
-            <p className="muted small hint">
-              色相 {hueCode(refHue)} の明度（縦）×彩度（横）。マスをクリックでその区画、
-              トーン記号のクリックかマスのダブルクリックでトーン全体を選択。
-              <span className="mapApproxKey" /> = sRGB外（近似色）、○ = 選択色の位置
-            </p>
-          </section>
-
-          {/* ---- Selected colour ---- */}
-          <section className="card">
-            <h2>選択色</h2>
-            <div className="chipRow">
-              <div className="chip" style={{ background: css(selected) }} />
-              <div className="chipText">
-                <input
-                  className="hexInput mono"
-                  value={hexInput}
-                  onChange={(e) => setHexInput(e.target.value)}
-                  onBlur={commitHex}
-                  onKeyDown={(e) => e.key === "Enter" && commitHex()}
-                  aria-label="HEX"
-                  spellCheck={false}
-                />
-                <div className="muted small mono">
-                  RGB {rgb255.join(", ")} ／ HSB {Math.round(hue)}°, {Math.round(sat * 100)}%,{" "}
-                  {Math.round(val * 100)}%
+            {/* Hue circle with the PCCS lightness / saturation sliders beside it */}
+            <section className="card hueCard">
+              <div className="hueSliders">
+                <div className="wheelHolder">
+                  <HueWheel hue={hue} onChange={setHue} ring={11} gap={2} className="wheelSmall">
+                    <div className="hueCenter">
+                      <span className="hueValueBig mono">{Math.round(hue)}°</span>
+                      <span className="muted small">
+                        {hueCode(refHue)} {hueName(refHue)}
+                      </span>
+                    </div>
+                  </HueWheel>
+                </div>
+                <div className="sliders">
+                  <div className="sliderBlock">
+                    <div className="sliderHead">
+                      <span className="sliderName">PCCS 明度</span>
+                      <span className="mid mono">
+                        {fmtRange(selRanges.lMin, selRanges.lMax, (x) => x.toFixed(1))}
+                      </span>
+                    </div>
+                    <PccsSlider
+                      label="PCCS明度"
+                      min={L_MIN}
+                      max={L_MAX}
+                      step={0.5}
+                      lo={selRanges.lMin}
+                      hi={selRanges.lMax}
+                      background={lightTrack}
+                      ticks={[1.5, 3.5, 5.5, 7.5, 9.5].map((v) => ({ value: v, label: v.toFixed(1) }))}
+                      valueText={(v) => `明度 ${v.toFixed(1)}`}
+                      onChange={(l) => setSelection({ kind: "value", l, s: sMid })}
+                    />
+                  </div>
+                  <div className="sliderBlock">
+                    <div className="sliderHead">
+                      <span className="sliderName">PCCS 彩度</span>
+                      <span className="mid mono">{fmtRange(selRanges.sMin, selRanges.sMax, satLabel)}</span>
+                    </div>
+                    <PccsSlider
+                      label="PCCS彩度"
+                      min={0}
+                      max={S_MAX}
+                      step={1}
+                      lo={selRanges.sMin}
+                      hi={selRanges.sMax}
+                      background={satTrack}
+                      ticks={SAT_STEPS.map((v) => ({
+                        value: v,
+                        label: v === 0 ? "n" : `${v}`,
+                        approx: v > 0 && satApprox[v],
+                      }))}
+                      valueText={(v) => (v === 0 ? "無彩色" : `彩度 ${v}s`)}
+                      onChange={(s) => setSelection({ kind: "value", l: lMid, s })}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <dl className="pccsInfo">
-              <dt>PCCS</dt>
-              <dd className="mono">{selectedNotation.long}</dd>
-              <dt>トーン</dt>
-              <dd>
-                <span className="mono">{selectedNotation.short}</span>
-                <span className="muted">
-                  {selectedTone
-                    ? ` ${TONE_BY_SYMBOL[selectedTone].ja}（${TONE_BY_SYMBOL[selectedTone].en}）`
-                    : " 無彩色"}
-                </span>
-              </dd>
-              <dt>推定値</dt>
-              <dd className="mono small">
-                {selectedNotation.neutral ? "—" : `h ${selectedPccs.h.toFixed(1)}`} ／ 明度{" "}
-                {selectedPccs.l.toFixed(2)} ／ 彩度 {selectedPccs.s.toFixed(2)}s
-              </dd>
-            </dl>
-            {selectedIsApprox && (
-              <p className="approxNote">
-                <span className="approxBadge">≈</span>
-                この位置は、囲んでいる範囲のうちsRGB外の色を、彩度を下げて近似した位置でもあります
-              </p>
-            )}
+            </section>
 
+            <section className="card settingsCard">
+              <h2>表示設定</h2>
+              <div className="toggles">
+                <Toggle checked={followPick} onChange={setFollowPick}>
+                  クリックした色の区画を表示
+                </Toggle>
+                <Toggle checked={showBands} onChange={setShowBands}>
+                  明度帯・彩度帯の境界線
+                </Toggle>
+                <Toggle checked={dimOutside} onChange={setDimOutside}>
+                  範囲外を暗く表示
+                </Toggle>
+              </div>
+            </section>
           </section>
-        </aside>
-      </main>
+
+          {/* ---- Centre: HSB picker ---- */}
+          <section className="centerColumn" aria-label="カラーピッカー">
+            <div className="pickerBox">
+              <SvSquare
+                hue={hue}
+                sat={sat}
+                val={val}
+                onPick={(s, v) => pickColor(hue, s, v)}
+                region={region}
+                showBands={showBands}
+                dimOutside={dimOutside}
+                stale={!field || field.hue !== hue}
+              />
+              <div className="axisNote">
+                <span>横軸: 彩度 S</span>
+                <span>縦軸: 明度 B（HSB）</span>
+              </div>
+            </div>
+          </section>
+
+          <div className="colDivider d1" aria-hidden="true" />
+          <div className="colDivider d2" aria-hidden="true" />
+
+          {/* ---- Right: map, tones ---- */}
+          <aside className="controls">
+            <section className="card mapCard">
+              <h2>明度×彩度マップ</h2>
+              <div className="mapBox">
+                <PccsMap
+                  hue={refHue}
+                  selection={selection}
+                  selected={selectedPccs}
+                  onSelectCell={(l, s) => setSelection({ kind: "value", l, s })}
+                  onSelectTone={(tone) => setSelection({ kind: "tone", tone })}
+                  onHover={setHovered}
+                />
+              </div>
+            </section>
+
+            <section className="card toneCard">
+              <h2>トーン</h2>
+              <ToneButtons
+                hue={refHue}
+                active={activeTone}
+                current={valueTone}
+                onSelect={(tone) => setSelection({ kind: "tone", tone })}
+              />
+            </section>
+          </aside>
+        </main>
+      </div>
 
       <footer className="footer">
         <p>
@@ -316,6 +386,65 @@ export default function PccsPalette() {
           sRGBで表示できない色は、OKLCHで明度・色相を保ったまま彩度を下げて近似表示しています（≈）。
         </p>
       </footer>
-    </div>
+    </>
+  );
+}
+
+/** On/off switch (a checkbox styled as a sliding toggle). */
+function Toggle({
+  checked,
+  onChange,
+  children,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="toggle">
+      <span>{children}</span>
+      <input
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        aria-checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+    </label>
+  );
+}
+
+/** Colour code that copies itself to the clipboard on click. */
+function CopyCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(t);
+  }, [copied]);
+  return (
+    <button
+      type="button"
+      className="copyCode mono"
+      onClick={() => {
+        navigator.clipboard?.writeText(code).then(
+          () => setCopied(true),
+          () => {},
+        );
+      }}
+      aria-label={`カラーコード ${code} をコピー`}
+    >
+      {code}
+      {copied ? (
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="copyIcon">
+          <path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" aria-hidden="true" className="copyIcon">
+          <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+          <path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        </svg>
+      )}
+    </button>
   );
 }

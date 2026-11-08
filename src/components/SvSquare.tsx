@@ -156,7 +156,7 @@ export function SvSquare({
         const m = Math.floor(longest.length / 4) * 2;
         const onTop = longest[m + 1] === 0 && longest[m] < n - 1;
         const text = "≈ sRGB外の近似";
-        ctx.font = `${12 * dpr}px system-ui, sans-serif`;
+        ctx.font = `${12 * dpr}px ${getComputedStyle(c).fontFamily}`;
         const tw = ctx.measureText(text).width;
         const pad = 5 * dpr;
         const bw = tw + pad * 2;
